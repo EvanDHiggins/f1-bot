@@ -1,10 +1,13 @@
 import fastf1
+from fastf1.core import SessionResults
 from collections import defaultdict
 from attrs import define
 from typing import Optional
+import mock
 
 DriverAbbrev = str
 DriverNum = str
+MINIMUM_SESSION_THRESHOLD = 18
 
 @define
 class DerivedDriverSessionData:
@@ -20,6 +23,8 @@ class DerivedDriverSessionData:
     # Driver abbreviation, e.g. VER, HAM, GAS
     abbreviation: str
 
+    full_name: str
+
     # The integer position they finished in.
     finish_pos: int
 
@@ -30,7 +35,7 @@ class DerivedDriverSessionData:
 
 
 def get_teammates(
-    session_results: fastf1.core.SessionResults
+    session_results: SessionResults
 ) -> list[tuple[DriverNum, DriverNum]]:
     """Returns pairings of driver abbrevs who were teammates in this session.
 
@@ -52,7 +57,7 @@ def get_teammates(
     return [tuple(drivers) for drivers in teams.values()]
 
 def compute_teammate_deltas(
-    session_results: fastf1.core.SessionResults
+    session_results: SessionResults
 ) -> list[DerivedDriverSessionData]:
     """Converts session results to a numeric teammate delta map.
 
@@ -66,6 +71,7 @@ def compute_teammate_deltas(
     def to_derived(driver_num: str) -> DerivedDriverSessionData:
         return DerivedDriverSessionData(
             number=driver_num,
+            full_name=session_results.FullName[driver_num],
             abbreviation=session_results.Abbreviation[driver_num],
             finish_pos=int(session_results.Position[driver_num]))
 
@@ -80,7 +86,7 @@ def compute_teammate_deltas(
 
     return [driver for drivers in teammates for driver in drivers]
 
-def get_unloaded_sessions_for_year(year: int) -> list[fastf1.core.SessionResults]:
+def get_unloaded_sessions_for_year(year: int) -> list[SessionResults]:
     schedule = fastf1.get_event_schedule(year)
     sessions = []
     for round_num in schedule.RoundNumber.values:
@@ -102,42 +108,78 @@ class Average:
     def compute(self) -> float:
         return self.total / self.count
 
+@define
+class AggregateDriverData:
+    name: str
+    abbreviation: str
+    avg_teammate_delta: float
+    num_sessions: int
+
 def compute_average_deltas_from_sessions(
-    sessions: list[fastf1.core.SessionResults]
-) -> dict[DriverAbbrev, float]:
-    driver_data = [
+    sessions: list[SessionResults]
+) -> dict[DriverAbbrev, AggregateDriverData]:
+    race_data = [
         compute_teammate_deltas(session.results)
         for session in sessions
     ]
+    name_lookup = {}
+    for race in race_data:
+        for driver in race:
+            if driver.full_name in name_lookup:
+                raise ValueError(f'Found duplicate driver code: {driver.full_name}')
+            name_lookup[driver.abbreviation] = driver.full_name
 
     # maps driver abbreviation to average
-    delta_averages = defaultdict(lambda: Average())
+    delta_averages: dict[str, Average] = defaultdict(lambda: Average())
 
-    for race in driver_data:
+    for race in race_data:
         for driver in race:
             delta_averages[driver.abbreviation].add(driver.teammate_delta)
 
-    average_deltas = {abbrev: avg.compute() for abbrev, avg in delta_averages.items()}
+    average_deltas = {
+        abbrev: AggregateDriverData(
+            abbreviation=abbrev,
+            name=name_lookup[abbrev],
+            avg_teammate_delta=avg.compute(),
+            num_sessions=avg.count
+        )
+        for abbrev, avg in delta_averages.items()
+        if avg.count > MINIMUM_SESSION_THRESHOLD
+    }
     return average_deltas
 
-
 def main():
+
     fastf1.Cache.enable_cache('../.f1-cache')
-    years_to_fetch = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
-    sessions = []
+    years_to_fetch = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
+    unloaded_sessions = []
     for year in years_to_fetch:
-        sessions.extend(get_unloaded_sessions_for_year(year))
+        unloaded_sessions.extend(get_unloaded_sessions_for_year(year))
 
-    for session in sessions:
-        session.load(laps=True, telemetry=False, weather=False, livedata=False)
+    loaded_sessions = []
+    err_count = 0
+    for session in unloaded_sessions:
+        try:
+            # There's an error in a single session's ergast data that causes
+            # fastf1 to barf. So we'll just catch the error and throw out that
+            # race.
+            session.load(laps=True, telemetry=False, weather=False, livedata=False)
+        except ValueError:
+            err_count += 1
+            continue
+        loaded_sessions.append(session)
 
-    print(compute_average_deltas_from_sessions(sessions))
+    driver_averages: dict[DriverAbbrev, AggregateDriverData] = (
+        compute_average_deltas_from_sessions(loaded_sessions))
 
-    # session = fastf1.get_session(2022, 'Bahrain', 'R')
-    # session.load(laps=True,telemetry=False, weather=False, livedata=False)
-    # driver_session_data = compute_teammate_deltas(session.results)
-    # for data in driver_session_data:
-        # print(f'{data.abbreviation} -- {data.teammate_delta}')
+    sorted_averages = sorted(
+        driver_averages.values(),
+        key=lambda dd: dd.avg_teammate_delta)
+
+    for data in sorted_averages:
+        print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
+
+    print(f'Encountered {err_count} errors.')
 
 
 if __name__ == "__main__":
