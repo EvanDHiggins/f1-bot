@@ -6,6 +6,29 @@ from typing import Optional
 DriverAbbrev = str
 DriverNum = str
 
+@define
+class DerivedDriverSessionData:
+    """Collection of driver data.
+
+    Some of this is pulled straight from fastf1.core.SessionResults, other
+    pieces are derived.
+    """
+
+    # SessionResults keys drivers by the string repr of their number
+    number: str
+
+    # Driver abbreviation, e.g. VER, HAM, GAS
+    abbreviation: str
+
+    # The integer position they finished in.
+    finish_pos: int
+
+    # The number of positions that they are ahead of their teammate.
+    # If driver A finishes 1st and driver B finishes 4th, their deltas are 3
+    # and -3, respectively.
+    teammate_delta: Optional[int] = None
+
+
 def get_teammates(
     session_results: fastf1.core.SessionResults
 ) -> list[tuple[DriverNum, DriverNum]]:
@@ -27,14 +50,6 @@ def get_teammates(
             teams.pop(team_name)
 
     return [tuple(drivers) for drivers in teams.values()]
-
-@define
-class DerivedDriverSessionData:
-    number: str
-    abbreviation: str
-    finish_pos: int
-    teammate_delta: Optional[int] = None
-
 
 def compute_teammate_deltas(
     session_results: fastf1.core.SessionResults
