@@ -80,14 +80,64 @@ def compute_teammate_deltas(
 
     return [driver for drivers in teammates for driver in drivers]
 
+def get_unloaded_sessions_for_year(year: int) -> list[fastf1.core.SessionResults]:
+    schedule = fastf1.get_event_schedule(year)
+    sessions = []
+    for round_num in schedule.RoundNumber.values:
+        if round_num == 0:
+            # Testing sessions have a number, but they cause the API to blow up.
+            continue
+        sessions.append(fastf1.get_session(year, round_num, 'R'))
+    return sessions
+
+class Average:
+    def __init__(self):
+        self.total = 0
+        self.count = 0
+
+    def add(self, num: int):
+        self.total += num
+        self.count += 1
+
+    def compute(self) -> float:
+        return self.total / self.count
+
+def compute_average_deltas_from_sessions(
+    sessions: list[fastf1.core.SessionResults]
+) -> dict[DriverAbbrev, float]:
+    driver_data = [
+        compute_teammate_deltas(session.results)
+        for session in sessions
+    ]
+
+    # maps driver abbreviation to average
+    delta_averages = defaultdict(lambda: Average())
+
+    for race in driver_data:
+        for driver in race:
+            delta_averages[driver.abbreviation].add(driver.teammate_delta)
+
+    average_deltas = {abbrev: avg.compute() for abbrev, avg in delta_averages.items()}
+    return average_deltas
+
 
 def main():
     fastf1.Cache.enable_cache('../.f1-cache')
-    session = fastf1.get_session(2022, 'Bahrain', 'R')
-    session.load(laps=True,telemetry=False, weather=False, livedata=False)
-    driver_session_data = compute_teammate_deltas(session.results)
-    for data in driver_session_data:
-        print(f'{data.abbreviation} -- {data.teammate_delta}')
+    years_to_fetch = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
+    sessions = []
+    for year in years_to_fetch:
+        sessions.extend(get_unloaded_sessions_for_year(year))
+
+    for session in sessions:
+        session.load(laps=True, telemetry=False, weather=False, livedata=False)
+
+    print(compute_average_deltas_from_sessions(sessions))
+
+    # session = fastf1.get_session(2022, 'Bahrain', 'R')
+    # session.load(laps=True,telemetry=False, weather=False, livedata=False)
+    # driver_session_data = compute_teammate_deltas(session.results)
+    # for data in driver_session_data:
+        # print(f'{data.abbreviation} -- {data.teammate_delta}')
 
 
 if __name__ == "__main__":
