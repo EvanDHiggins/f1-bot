@@ -2,8 +2,7 @@ import fastf1
 from fastf1.core import SessionResults
 from collections import defaultdict
 from attrs import define
-from typing import Optional
-import mock
+from typing import Optional, Iterable
 
 DriverAbbrev = str
 DriverNum = str
@@ -86,16 +85,6 @@ def compute_teammate_deltas(
 
     return [driver for drivers in teammates for driver in drivers]
 
-def get_unloaded_sessions_for_year(year: int) -> list[SessionResults]:
-    schedule = fastf1.get_event_schedule(year)
-    sessions = []
-    for round_num in schedule.RoundNumber.values:
-        if round_num == 0:
-            # Testing sessions have a number, but they cause the API to blow up.
-            continue
-        sessions.append(fastf1.get_session(year, round_num, 'R'))
-    return sessions
-
 class Average:
     def __init__(self):
         self.total = 0
@@ -148,29 +137,73 @@ def compute_average_deltas_from_sessions(
     }
     return average_deltas
 
-def main():
+@define
+class SessionLoader:
+    session_types: Iterable[str]
 
-    fastf1.Cache.enable_cache('../.f1-cache')
-    years_to_fetch = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
-    unloaded_sessions = []
-    for year in years_to_fetch:
-        unloaded_sessions.extend(get_unloaded_sessions_for_year(year))
+    laps: bool = False
+    telemetry: bool = False
+    weather: bool = False
+    livedata: bool = False
 
-    loaded_sessions = []
-    err_count = 0
-    for session in unloaded_sessions:
-        try:
+    _session_load_err_count: int = 0
+
+    def err_count(self) -> int:
+        return self._session_load_err_count
+
+    def load_for_years(self, years: Iterable[int]) -> list[SessionResults]:
+        unloaded_sessions = []
+        for year in years:
+            unloaded_sessions.extend(
+                    get_unloaded_sessions_for_year(year, self.session_types))
+        
+        return self.safe_load(unloaded_sessions)
+
+    def safe_load(
+        self, sessions: Iterable[SessionResults]
+    ) -> list[SessionResults]:
+        """Loads sessions and silences API errors that are encountered."""
+        loaded_sessions = []
+        for session in sessions:
             # There's an error in a single session's ergast data that causes
             # fastf1 to barf. So we'll just catch the error and throw out that
             # race.
-            session.load(laps=True, telemetry=False, weather=False, livedata=False)
-        except ValueError:
-            err_count += 1
+            try:
+                session.load(
+                    laps=self.laps,
+                    telemetry=self.telemetry,
+                    weather=self.weather,
+                    livedata=self.livedata
+                )
+            except ValueError:
+                self._session_load_err_count += 1
+                continue
+            loaded_sessions.append(session)
+        return loaded_sessions
+
+
+def get_unloaded_sessions_for_year(
+    year: int, session_types: Iterable[str]
+) -> list[SessionResults]:
+    schedule = fastf1.get_event_schedule(year)
+    sessions = []
+    for round_num in schedule.RoundNumber.values:
+        if round_num == 0:
+            # Testing sessions have a number, but they cause the API to blow up.
             continue
-        loaded_sessions.append(session)
+        for session_type in session_types:
+            sessions.append(fastf1.get_session(year, round_num, session_type))
+    return sessions
+
+
+def main():
+    fastf1.Cache.enable_cache('../.f1-cache')
+
+    session_loader = SessionLoader(session_types=['R'], laps=True)
+    sessions = session_loader.load_for_years(range(2010, 2022))
 
     driver_averages: dict[DriverAbbrev, AggregateDriverData] = (
-        compute_average_deltas_from_sessions(loaded_sessions))
+        compute_average_deltas_from_sessions(sessions))
 
     sorted_averages = sorted(
         driver_averages.values(),
@@ -179,7 +212,7 @@ def main():
     for data in sorted_averages:
         print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
 
-    print(f'Encountered {err_count} errors.')
+    print(f'Encountered {session_loader.err_count()} errors.')
 
 
 if __name__ == "__main__":
