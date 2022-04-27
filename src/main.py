@@ -1,8 +1,10 @@
+import sys
+
 import fastf1
-from fastf1.core import SessionResults
+from fastf1.core import SessionResults, Session
 from collections import defaultdict
 from attrs import define
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Callable
 
 DriverAbbrev = str
 DriverNum = str
@@ -74,10 +76,11 @@ def compute_teammate_deltas(
             abbreviation=session_results.Abbreviation[driver_num],
             finish_pos=int(session_results.Position[driver_num]))
 
-    teammates = [
-        (to_derived(d1), to_derived(d2))
-        for d1, d2 in get_teammates(session_results)
-    ]
+
+    teammates = []
+    for d1, d2 in get_teammates(session_results):
+        teammates.append((to_derived(d1), to_derived(d2)))
+
     for d1, d2 in teammates:
         d1.teammate_delta = d2.finish_pos - d1.finish_pos
         d2.teammate_delta = -d1.teammate_delta
@@ -105,12 +108,15 @@ class AggregateDriverData:
     num_sessions: int
 
 def compute_average_deltas_from_sessions(
-    sessions: list[SessionResults]
+    sessions: list[Session]
 ) -> dict[DriverAbbrev, AggregateDriverData]:
-    race_data = [
-        compute_teammate_deltas(session.results)
-        for session in sessions
-    ]
+    race_data = []
+    for session in sessions:
+        try:
+            race_data.append(compute_teammate_deltas(session.results))
+        except:
+            import code; code.interact(local=locals())
+
     name_lookup = {}
     for race in race_data:
         for driver in race:
@@ -151,8 +157,8 @@ class SessionLoader:
     def err_count(self) -> int:
         return self._session_load_err_count
 
-    def load_for_years(self, years: Iterable[int]) -> list[SessionResults]:
-        unloaded_sessions = []
+    def load_for_years(self, years: Iterable[int]) -> list[Session]:
+        unloaded_sessions: list[Session] = []
         for year in years:
             unloaded_sessions.extend(
                     get_unloaded_sessions_for_year(year, self.session_types))
@@ -160,8 +166,8 @@ class SessionLoader:
         return self.safe_load(unloaded_sessions)
 
     def safe_load(
-        self, sessions: Iterable[SessionResults]
-    ) -> list[SessionResults]:
+        self, sessions: Iterable[Session]
+    ) -> list[Session]:
         """Loads sessions and silences API errors that are encountered."""
         loaded_sessions = []
         for session in sessions:
@@ -184,7 +190,7 @@ class SessionLoader:
 
 def get_unloaded_sessions_for_year(
     year: int, session_types: Iterable[str]
-) -> list[SessionResults]:
+) -> list[Session]:
     schedule = fastf1.get_event_schedule(year)
     sessions = []
     for round_num in schedule.RoundNumber.values:
@@ -195,10 +201,7 @@ def get_unloaded_sessions_for_year(
             sessions.append(fastf1.get_session(year, round_num, session_type))
     return sessions
 
-
-def main():
-    fastf1.Cache.enable_cache('../.f1-cache')
-
+def race(args: Iterable[str]):
     session_loader = SessionLoader(session_types=['R'], laps=True)
     sessions = session_loader.load_for_years(range(2010, 2022))
 
@@ -207,12 +210,61 @@ def main():
 
     sorted_averages = sorted(
         driver_averages.values(),
-        key=lambda dd: dd.avg_teammate_delta)
+        key=lambda dd: dd.avg_teammate_delta,
+        reverse=True)
 
     for data in sorted_averages:
         print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
 
     print(f'Encountered {session_loader.err_count()} errors.')
+
+def is_broken_session(session: Session):
+    """Identifies corrupted sessions.
+
+    A few sessions have corrupted data (mostly duplicate driver numbers).
+    Because fastf1 exposes pandas DataFrames I'm not positive how to easily
+    manipulate them to fix the data. For now I'm just skipping the broken
+    sessions.
+    """
+    is_sochi_2018 = (
+        'Russian' in session.event.EventName and
+        session.date.year == 2018 and
+        session.name == 'Qualifying')
+    is_imola_2020 = (
+        'Romagna' in session.event.EventName and
+        session.date.year == 2020 and
+        session.name == 'Qualifying')
+    return is_sochi_2018 or is_imola_2020
+
+def qualifying(args: Iterable[str]):
+    session_loader = SessionLoader(session_types=['Q'], laps=True)
+    temp_sessions: list[Session] = session_loader.load_for_years(list(range(2010, 2022)))
+
+    sessions = []
+    for session in temp_sessions:
+        if not is_broken_session(session):
+            sessions.append(session)
+
+    driver_averages: dict[DriverAbbrev, AggregateDriverData] = (
+        compute_average_deltas_from_sessions(sessions))
+
+    sorted_averages = sorted(
+        driver_averages.values(),
+        key=lambda dd: dd.avg_teammate_delta,
+        reverse=True)
+
+    for data in sorted_averages:
+        print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
+
+    print(f'Encountered {session_loader.err_count()} errors.')
+
+
+def main():
+    fastf1.Cache.enable_cache('../.f1-cache')
+
+    command_func: Callable[[Iterable[str]], None] = globals()[sys.argv[1]]
+    command_func(sys.argv[2:])
+
 
 
 if __name__ == "__main__":

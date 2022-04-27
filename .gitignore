@@ -1,2 +1,3 @@
 .f1-cache
 env/*
+__pycache__
