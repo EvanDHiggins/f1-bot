@@ -201,7 +201,7 @@ def get_unloaded_sessions_for_year(
             sessions.append(fastf1.get_session(year, round_num, session_type))
     return sessions
 
-def race(args: Iterable[str]):
+def race(_: Iterable[str]):
     session_loader = SessionLoader(session_types=['R'], laps=True)
     sessions = session_loader.load_for_years(range(2010, 2022))
 
@@ -236,7 +236,7 @@ def is_broken_session(session: Session):
         session.name == 'Qualifying')
     return is_sochi_2018 or is_imola_2020
 
-def qualifying(args: Iterable[str]):
+def qualifying(_: Iterable[str]):
     session_loader = SessionLoader(session_types=['Q'], laps=True)
     temp_sessions: list[Session] = session_loader.load_for_years(list(range(2010, 2022)))
 
