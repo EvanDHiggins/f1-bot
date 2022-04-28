@@ -8,6 +8,13 @@ DriverAbbrev = str
 DriverNum = str
 MINIMUM_SESSION_THRESHOLD = 18
 
+def run(args: list[str]):
+    if 'race'.startswith(args[0]):
+        race()
+    elif 'qualifying'.startswith(args[0]):
+        qualifying()
+
+
 @define
 class DerivedDriverSessionData:
     """Collection of driver data.
@@ -137,12 +144,6 @@ def compute_average_deltas_from_sessions(
         if avg.count > MINIMUM_SESSION_THRESHOLD
     }
     return average_deltas
-
-def run(args: list[str]):
-    if 'race'.startswith(args[0]):
-        race()
-    elif 'qualifying'.startswith(args[0]):
-        qualifying()
 
 def race():
     session_loader = SessionLoader(session_types=['R'], laps=True)
