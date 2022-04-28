@@ -1,3 +1,3 @@
 from .sessions import SessionLoader, SessionType, SessionPredicate
-from . import analysis
+from . import teammate_delta
 

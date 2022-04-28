@@ -138,8 +138,13 @@ def compute_average_deltas_from_sessions(
     }
     return average_deltas
 
+def run(args: list[str]):
+    if 'race'.startswith(args[0]):
+        race()
+    elif 'qualifying'.startswith(args[0]):
+        qualifying()
 
-def race(_: Iterable[str]):
+def race():
     session_loader = SessionLoader(session_types=['R'], laps=True)
     sessions = session_loader.load_for_years(range(2010, 2022))
 
@@ -156,7 +161,7 @@ def race(_: Iterable[str]):
 
     print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
 
-def qualifying(_: Iterable[str]):
+def qualifying():
     ignore = [
         SessionPredicate(
             name="Russian",

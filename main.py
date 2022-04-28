@@ -1,10 +1,9 @@
-from lib import analysis
+from lib import teammate_delta
 import fastf1
 import sys
 
 COMMAND_MAP = {
-    "race": analysis.race,
-    "qualifying": analysis.qualifying
+    "teammate_delta": teammate_delta.run
 }
 
 def main():
