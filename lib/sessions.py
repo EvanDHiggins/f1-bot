@@ -3,6 +3,23 @@ import fastf1
 from attrs import define
 from typing import Iterable
 from fastf1.core import Session
+import enum
+
+class SessionType(enum.Enum):
+    RACE = 'Race'
+    QUALIFYING = 'Qualifying'
+
+@define
+class SessionPredicate:
+    name: str
+    year: int
+    session: SessionType
+
+    def matches(self, session: Session) -> bool:
+        return (self.name in session.event.EventName and
+                self.year == session.date.year and
+                self.session.value == session.name)
+
 
 @define
 class SessionLoader:
@@ -15,14 +32,19 @@ class SessionLoader:
     weather: bool = False
     livedata: bool = False
 
-    _session_load_err_count: int = 0
-    _corrupted_sessions: list[Session] = []
+    # Random sessions will have bad data which cause failures that are hard to
+    # catch generically (e.g. a try/except), so this let's me selectively omit
+    # races where I find issues.
+    ignore: list[SessionPredicate] = []
 
-    def err_count(self) -> int:
-        return self._session_load_err_count
+    _corrupted_sessions: list[Session] = []
+    _ignored_sessions: list[Session] = []
 
     def corrupted_sessions(self) -> list[Session]:
         return self._corrupted_sessions
+
+    def ignored_sessions(self) -> list[Session]:
+        return self._ignored_sessions
 
     def load_for_years(self, years: Iterable[int]) -> list[Session]:
         unloaded_sessions: list[Session] = []
@@ -30,17 +52,20 @@ class SessionLoader:
             unloaded_sessions.extend(
                     get_unloaded_sessions_for_year(year, self.session_types))
         
-        return self.safe_load(unloaded_sessions)
+        return self._safe_load(unloaded_sessions)
 
-    def safe_load(
+    def _safe_load(
         self, sessions: Iterable[Session]
     ) -> list[Session]:
         """Loads sessions and silences API errors that are encountered."""
         loaded_sessions = []
         for session in sessions:
-            # There's an error in a single session's ergast data that causes
-            # fastf1 to barf. So we'll just catch the error and throw out that
-            # race.
+            if any(pred.matches(session) for pred in self.ignore):
+                self._ignored_sessions.append(session)
+                continue
+
+            # Sometimes sessions have bad data from Ergast. We'll keep going
+            # and deal with them later.
             try:
                 session.load(
                     laps=self.laps,
@@ -49,7 +74,6 @@ class SessionLoader:
                     livedata=self.livedata
                 )
             except ValueError:
-                self._session_load_err_count += 1
                 self._corrupted_sessions.append(session)
                 continue
             loaded_sessions.append(session)

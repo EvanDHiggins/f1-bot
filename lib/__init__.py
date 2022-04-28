@@ -1,2 +1,3 @@
-from .sessions import SessionLoader
+from .sessions import SessionLoader, SessionType, SessionPredicate
 from . import analysis
+

@@ -2,7 +2,7 @@ from fastf1.core import SessionResults, Session
 from collections import defaultdict
 from attrs import define
 from typing import Optional, Iterable
-from . import SessionLoader
+from . import SessionLoader, SessionPredicate, SessionType
 
 DriverAbbrev = str
 DriverNum = str
@@ -110,10 +110,7 @@ def compute_average_deltas_from_sessions(
 ) -> dict[DriverAbbrev, AggregateDriverData]:
     race_data = []
     for session in sessions:
-        try:
-            race_data.append(compute_teammate_deltas(session.results))
-        except:
-            import code; code.interact(local=locals())
+        race_data.append(compute_teammate_deltas(session.results))
 
     name_lookup = {}
     for race in race_data:
@@ -154,37 +151,27 @@ def race(_: Iterable[str]):
         key=lambda dd: dd.avg_teammate_delta,
         reverse=True)
 
-    for data in sorted_averages:
-        print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
+    for idx, data in enumerate(sorted_averages):
+        print(f'{idx+1}: {data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
 
-    print(f'Encountered {session_loader.err_count()} errors.')
-
-def is_broken_session(session: Session):
-    """Identifies corrupted sessions.
-
-    A few sessions have corrupted data (mostly duplicate driver numbers).
-    Because fastf1 exposes pandas DataFrames I'm not positive how to easily
-    manipulate them to fix the data. For now I'm just skipping the broken
-    sessions.
-    """
-    is_sochi_2018 = (
-        'Russian' in session.event.EventName and
-        session.date.year == 2018 and
-        session.name == 'Qualifying')
-    is_imola_2020 = (
-        'Romagna' in session.event.EventName and
-        session.date.year == 2020 and
-        session.name == 'Qualifying')
-    return is_sochi_2018 or is_imola_2020
+    print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
 
 def qualifying(_: Iterable[str]):
-    session_loader = SessionLoader(session_types=['Q'], laps=True)
-    temp_sessions: list[Session] = session_loader.load_for_years(list(range(2010, 2022)))
+    ignore = [
+        SessionPredicate(
+            name="Russian",
+            year=2018,
+            session=SessionType.QUALIFYING
+        ),
+        SessionPredicate(
+            name="Romagna",
+            year=2020,
+            session=SessionType.QUALIFYING
+        )
+    ]
+    session_loader = SessionLoader(session_types=['Q'], laps=True, ignore=ignore)
 
-    sessions = []
-    for session in temp_sessions:
-        if not is_broken_session(session):
-            sessions.append(session)
+    sessions: list[Session] = session_loader.load_for_years(list(range(2010, 2022)))
 
     driver_averages: dict[DriverAbbrev, AggregateDriverData] = (
         compute_average_deltas_from_sessions(sessions))
@@ -194,7 +181,7 @@ def qualifying(_: Iterable[str]):
         key=lambda dd: dd.avg_teammate_delta,
         reverse=True)
 
-    for data in sorted_averages:
-        print(f'{data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
+    for idx, data in enumerate(sorted_averages):
+        print(f'{idx+1}: {data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
 
-    print(f'Encountered {session_loader.err_count()} errors.')
+    print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
