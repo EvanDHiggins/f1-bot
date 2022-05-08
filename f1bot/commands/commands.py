@@ -1,11 +1,15 @@
 from . import teammate_delta
+from . import session_results
 from . import command
 import fastf1
 
 def register_commands(*commands: command.Command) -> dict[str, command.Command]:
     return {cmd.name: cmd for cmd in commands}
 
-COMMAND_MAP = register_commands(teammate_delta.TeammateDeltaCommand)
+COMMAND_MAP = register_commands(
+    teammate_delta.TeammateDeltaCommand,
+    session_results.SessionResultsCommand,
+)
 
 def init_fastf1():
     fastf1.Cache.enable_cache('.f1-cache')
