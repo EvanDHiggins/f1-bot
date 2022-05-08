@@ -65,6 +65,14 @@ class SessionLoader:
         
         return self._safe_load(unloaded_sessions)
 
+    def load_for_weekend(self, year: int, weekend: str) -> list[Session]:
+        unloaded_sessions: list[Session] = []
+        for session_type in self.session_types:
+            unloaded_sessions.append(
+                fastf1.get_session(year, weekend, session_type))
+        return self._safe_load(unloaded_sessions)
+
+
     def _safe_load(
         self, sessions: Iterable[Session]
     ) -> list[Session]:

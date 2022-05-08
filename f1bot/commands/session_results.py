@@ -10,8 +10,10 @@ class SessionResults:
         year, weekend, session_type = self.parse_args(args)
         return self.get_results(year, weekend, session_type)
 
-    def get_results(self, year: int, weekend: str, session) -> str:
-        return f"Found correct input: {year}, {weekend}, {session}"
+    def get_results(self, year: int, weekend: str, session_type: lib.SessionType) -> str:
+        session = lib.SessionLoader(
+                session_types=[session_type.value]).load_for_weekend(year, weekend)
+        return f"Found correct input: {year}, {weekend}, {session_type}"
 
     def parse_args(self, args: list[str]) -> Tuple[int, str, lib.SessionType]:
         if len(args) != 3:
