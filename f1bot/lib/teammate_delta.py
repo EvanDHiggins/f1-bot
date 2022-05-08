@@ -1,8 +1,8 @@
 from fastf1.core import SessionResults, Session
 from collections import defaultdict
 from attrs import define
-from typing import Optional, Iterable
-from . import SessionLoader, SessionPredicate, SessionType
+from typing import Optional
+from .sessions import SessionLoader, SessionPredicate, SessionType
 
 DriverAbbrev = str
 DriverNum = str
