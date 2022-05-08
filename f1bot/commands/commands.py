@@ -1,8 +1,8 @@
-from .. import lib
+from . import teammate_delta
 import fastf1
 
 COMMAND_MAP = {
-    "teammate_delta": lib.teammate_delta.run
+    "teammate_delta": teammate_delta.run
 }
 
 def init_fastf1():
