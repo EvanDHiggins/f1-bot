@@ -1,8 +1,30 @@
 import attrs
-from typing import Protocol, Type
+from typing import Protocol, Type, Union
+import pandas
+import enum
+
+class CommandStatus(enum.Enum):
+    OK = 0
+    INTERNAL_ERROR = 1
+
+CommandValue = Union[str, pandas.DataFrame]
+
+@attrs.define(frozen=True)
+class CommandResult:
+    status: CommandStatus
+    value: CommandValue
+
+    @staticmethod
+    def error(value: CommandValue) -> 'CommandResult':
+        return CommandResult(status=CommandStatus.INTERNAL_ERROR, value=value)
+
+    @staticmethod
+    def ok(value: CommandValue) -> 'CommandResult':
+        return CommandResult(status=CommandStatus.OK, value=value)
+
 
 class Runner(Protocol):
-    def run(self, args: list[str]) -> str:
+    def run(self, args: list[str]) -> CommandValue:
         raise NotImplementedError
 
 
@@ -15,6 +37,7 @@ class CommandError(Exception):
     """
     pass
 
+
 @attrs.define(frozen=True)
 class Command:
     name: str
@@ -24,12 +47,16 @@ class Command:
     # Type constructor for a Runner
     get: Type[Runner]
 
-    def run(self, args: list[str]) -> str:
+    def run(self, args: list[str]) -> CommandResult:
         try:
-            return self.get().run(args)
+            return CommandResult.ok(self.get().run(args))
         except CommandError as e:
-            return f"Failed to run command '{self.name}' with error:\n{str(e)}\n\n\n{self.help}"
+            return CommandResult.error(
+                f"Failed to run command '{self.name}' with error:\n"
+                f"{str(e)}\n\n\n{self.help}"
+            )
 
         except Exception as e:
-            return f"Internal error running command: {self.name}.\n\n{str(e)}"
+            return CommandResult.error(
+                f"Internal error running command: {self.name}.\n\n{str(e)}")
 

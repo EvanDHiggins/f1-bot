@@ -1,19 +1,21 @@
 from . import command as cmd
+from f1bot.commands.command import CommandResult, CommandValue
 from typing import Tuple
 from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
+import pandas
 
 HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
 
 class SessionResults:
     """Returns the session results for a particular session."""
-    def run(self, args: list[str]) -> str:
+    def run(self, args: list[str]) -> CommandValue:
         year, weekend, session_type = self.parse_args(args)
         return self.get_results(year, weekend, session_type)
 
     def get_results(
         self, year: int, weekend: str, session_type: SessionType
-    ) -> str:
+    ) -> pandas.DataFrame:
         session = SessionLoader(
                 session_types=[session_type]
             ).load_for_weekend(year, weekend)[0]
@@ -23,14 +25,14 @@ class SessionResults:
             return self.format_qualifying(session)
         return self.format_practice(session)
 
-    def format_race(self, session: Session) -> str:
-        return ""
+    def format_race(self, session: Session) -> pandas.DataFrame:
+        return session.results
 
-    def format_qualifying(self, session: Session) -> str:
-        return ""
+    def format_qualifying(self, session: Session) -> pandas.DataFrame:
+        return session.results
 
-    def format_practice(self, session: Session) -> str:
-        return ""
+    def format_practice(self, session: Session) -> pandas.DataFrame:
+        return session.results
 
     def parse_args(self, args: list[str]) -> Tuple[int, str, SessionType]:
         if len(args) != 3:
