@@ -35,7 +35,7 @@ class SessionPredicate:
 @define
 class SessionLoader:
     # Values like 'R', 'Q', etc. that fastf1 accepts as valid session types.
-    session_types: Iterable[str]
+    session_types: Iterable[SessionType]
 
     # Passed through to fastf1.core.Session.load
     laps: bool = False
@@ -69,7 +69,7 @@ class SessionLoader:
         unloaded_sessions: list[Session] = []
         for session_type in self.session_types:
             unloaded_sessions.append(
-                fastf1.get_session(year, weekend, session_type))
+                fastf1.get_session(year, weekend, session_type.value))
         return self._safe_load(unloaded_sessions)
 
 
@@ -99,7 +99,7 @@ class SessionLoader:
         return loaded_sessions
 
 def get_unloaded_sessions_for_year(
-    year: int, session_types: Iterable[str]
+    year: int, session_types: Iterable[SessionType]
 ) -> list[Session]:
     schedule = fastf1.get_event_schedule(year)
     sessions = []
@@ -108,5 +108,5 @@ def get_unloaded_sessions_for_year(
             # Testing sessions have a number, but they cause the API to blow up.
             continue
         for session_type in session_types:
-            sessions.append(fastf1.get_session(year, round_num, session_type))
+            sessions.append(fastf1.get_session(year, round_num, session_type.value))
     return sessions

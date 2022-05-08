@@ -1,6 +1,6 @@
 from . import command as cmd
 from typing import Tuple
-from .. import lib
+from f1bot.lib.sessions import SessionType, SessionLoader
 
 HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
 
@@ -10,12 +10,15 @@ class SessionResults:
         year, weekend, session_type = self.parse_args(args)
         return self.get_results(year, weekend, session_type)
 
-    def get_results(self, year: int, weekend: str, session_type: lib.SessionType) -> str:
-        session = lib.SessionLoader(
-                session_types=[session_type.value]).load_for_weekend(year, weekend)
+    def get_results(
+        self, year: int, weekend: str, session_type: SessionType
+    ) -> str:
+        session = SessionLoader(
+                session_types=[session_type]
+            ).load_for_weekend(year, weekend)[0]
         return f"Found correct input: {year}, {weekend}, {session_type}"
 
-    def parse_args(self, args: list[str]) -> Tuple[int, str, lib.SessionType]:
+    def parse_args(self, args: list[str]) -> Tuple[int, str, SessionType]:
         if len(args) != 3:
             raise cmd.CommandError(
                 f"Not enough arguments. Expected 3, found {len(args)}.")
@@ -24,7 +27,7 @@ class SessionResults:
         if year < 1950:
             raise cmd.CommandError("Formula 1 started in 1950...")
 
-        session_type = lib.SessionType.parse(args[2])
+        session_type = SessionType.parse(args[2])
         if session_type is None:
             raise cmd.CommandError(
                 f"Could not parse session string: {args[2]}")
