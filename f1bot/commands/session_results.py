@@ -1,5 +1,6 @@
 from . import command as cmd
 from typing import Tuple
+from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
 
 HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
@@ -16,7 +17,20 @@ class SessionResults:
         session = SessionLoader(
                 session_types=[session_type]
             ).load_for_weekend(year, weekend)[0]
-        return f"Found correct input: {year}, {weekend}, {session_type}"
+        if session_type == SessionType.RACE:
+            return self.format_race(session)
+        elif session_type == SessionType.QUALIFYING:
+            return self.format_qualifying(session)
+        return self.format_practice(session)
+
+    def format_race(self, session: Session) -> str:
+        return ""
+
+    def format_qualifying(self, session: Session) -> str:
+        return ""
+
+    def format_practice(self, session: Session) -> str:
+        return ""
 
     def parse_args(self, args: list[str]) -> Tuple[int, str, SessionType]:
         if len(args) != 3:
