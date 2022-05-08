@@ -4,10 +4,21 @@ from attrs import define
 from typing import Iterable
 from fastf1.core import Session
 import enum
+from typing import Optional
 
 class SessionType(enum.Enum):
-    RACE = 'Race'
-    QUALIFYING = 'Qualifying'
+    FREE_PRACTICE_1 = 'FP1'
+    FREE_PRACTICE_2 = 'FP2'
+    FREE_PRACTICE_3 = 'FP3'
+    QUALIFYING = 'Q'
+    RACE = 'R'
+
+    @staticmethod
+    def parse(s: str) -> Optional['SessionType']:
+        for session_type in SessionType:
+            if s.upper() == session_type.value:
+                return session_type
+        return None
 
 @define
 class SessionPredicate:
