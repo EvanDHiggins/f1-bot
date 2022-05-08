@@ -1,8 +1,9 @@
 from . import command as cmd
-from f1bot.commands.command import CommandResult, CommandValue
+from f1bot.commands.command import CommandValue
 from typing import Tuple
 from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
+from f1bot.utils.fmt import format_lap_time
 import pandas
 
 HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
@@ -25,11 +26,25 @@ class SessionResults:
             return self.format_qualifying(session)
         return self.format_practice(session)
 
+
     def format_race(self, session: Session) -> pandas.DataFrame:
-        return session.results
+        results = session.results[
+            ['FullName', 'Position', 'TeamName', 'Status']
+        ]
+        results['Position'] = results['Position'].astype(int)
+        return results
 
     def format_qualifying(self, session: Session) -> pandas.DataFrame:
-        return session.results
+        results = session.results[
+            ['FullName', 'Position', 'TeamName', 'Q1', 'Q2', 'Q3']
+        ]
+
+        # Converts lap times into a readable format from Timedelta
+        for q in ['Q1', 'Q2', 'Q3']:
+            results[q] = results[q].apply(format_lap_time)
+
+        results['Position'] = results['Position'].astype(int)
+        return results
 
     def format_practice(self, session: Session) -> pandas.DataFrame:
         return session.results
