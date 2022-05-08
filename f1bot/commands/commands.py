@@ -11,16 +11,25 @@ def init_fastf1():
     fastf1.Cache.enable_cache('.f1-cache')
 
 def execute(args: list[str]) -> str:
+    """Looks up a command and runs it.
+
+    Supports three forms:
+        help: Prints the availabe commands and their descriptions.
+        help $COMMAND: Prints the help text for $COMMAND.
+        $COMMAND args...: Runs COMMAND with args.
+    """
     if len(args) < 1:
         return "No arguments."
 
     command_name = args[0]
+    rest = args[1:]
 
-    if command_name == 'help':
+    if command_name == 'help' and len(rest) >= 1:
+        return COMMAND_MAP[rest[0]].help
+    elif command_name == 'help':
         return help()
 
     command = COMMAND_MAP[args[0]]
-    rest = args[1:]
     if len(rest) >= 1 and rest[0] == 'help':
         return command.help
 
