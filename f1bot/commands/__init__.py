@@ -1,2 +1,2 @@
-from .commands import init_fastf1, execute
+from .commands import execute
 

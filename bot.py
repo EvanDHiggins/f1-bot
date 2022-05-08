@@ -1,7 +1,7 @@
-from . import commands
+import f1bot
 
 def main():
-    commands.init_fastf1()
+    f1bot.init()
 
 if __name__ == "__main__":
     main()

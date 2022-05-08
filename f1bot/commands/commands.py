@@ -11,9 +11,6 @@ COMMAND_MAP = register_commands(
     session_results.SessionResultsCommand,
 )
 
-def init_fastf1():
-    fastf1.Cache.enable_cache('.f1-cache')
-
 def execute(args: list[str]) -> CommandResult:
     """Looks up a command and runs it.
 
