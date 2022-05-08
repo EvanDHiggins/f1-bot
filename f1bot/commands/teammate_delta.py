@@ -153,7 +153,8 @@ class TeammateDelta:
 
 
     def race(self):
-        session_loader = SessionLoader(session_types=['R'], laps=True)
+        session_loader = SessionLoader(
+                session_types=[SessionType.RACE], laps=True)
         sessions = session_loader.load_for_years(range(2010, 2022))
 
         driver_averages: dict[DriverAbbrev, AggregateDriverData] = (
@@ -182,7 +183,10 @@ class TeammateDelta:
                 session=SessionType.QUALIFYING
             )
         ]
-        session_loader = SessionLoader(session_types=['Q'], laps=True, ignore=ignore)
+        session_loader = SessionLoader(
+                session_types=[SessionType.QUALIFYING],
+                laps=True,
+                ignore=ignore)
 
         sessions: list[Session] = session_loader.load_for_years(list(range(2010, 2022)))
 
