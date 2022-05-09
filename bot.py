@@ -12,6 +12,13 @@ bot = commands.Bot(command_prefix='\\')
 
 @bot.command()
 async def f1(ctx, *args: str):
+    """Creates f1 command to interface with the underlying CLI.
+
+    When connected to a discord guild, can be run like:
+      -- '\f1 results 2016 spain r'
+
+    Args are passed straight through to the underlying CLI.
+    """
     result = f1bot.commands.execute(list(args))
     if result.is_error():
         await ctx.send(f'{result.status.name}: {result.value}')
