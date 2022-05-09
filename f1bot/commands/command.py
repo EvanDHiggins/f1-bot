@@ -22,6 +22,12 @@ class CommandResult:
     def ok(value: CommandValue) -> 'CommandResult':
         return CommandResult(status=CommandStatus.OK, value=value)
 
+    def is_ok(self) -> bool:
+        return self.status == CommandStatus.OK
+
+    def is_error(self) -> bool:
+        return self.status == CommandStatus.INTERNAL_ERROR
+
 
 class Runner(Protocol):
     def run(self, args: list[str]) -> CommandValue:
