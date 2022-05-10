@@ -1,9 +1,13 @@
+aiohttp==3.7.4.post0
 appdirs==1.4.4
+async-timeout==3.0.1
 attrs==21.4.0
 cattrs==1.10.0
 certifi==2021.10.8
+chardet==4.0.0
 charset-normalizer==2.0.12
 cycler==0.11.0
+discord.py==1.7.3
 distlib==0.3.4
 fastf1==2.2.5
 filelock==3.6.0
@@ -13,6 +17,7 @@ idna==3.3
 kiwisolver==1.4.2
 matplotlib==3.5.2
 msgpack==1.0.3
+multidict==6.0.2
 neovim==0.3.1
 numpy==1.22.3
 packaging==21.3
@@ -31,7 +36,9 @@ six==1.16.0
 tabulate==0.8.9
 thefuzz==0.19.0
 timple==0.1.5
+typing_extensions==4.2.0
 url-normalize==1.4.3
 urllib3==1.26.9
 virtualenv==20.14.1
 websockets==10.3
+yarl==1.7.2
