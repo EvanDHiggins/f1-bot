@@ -1,5 +1,4 @@
-from . import teammate_delta
-from . import session_results
+from f1bot.commands import standings, teammate_delta, session_results
 from f1bot.commands.command import Command, CommandResult
 import fastf1
 
@@ -9,6 +8,7 @@ def register_commands(*commands: Command) -> dict[str, Command]:
 COMMAND_MAP = register_commands(
     teammate_delta.TeammateDeltaCommand,
     session_results.SessionResultsCommand,
+    standings.StandingsCommand,
 )
 
 def execute(args: list[str]) -> CommandResult:

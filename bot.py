@@ -6,7 +6,6 @@ from discord.ext import commands
 import pandas
 
 TOKEN = os.getenv('F1_BOT_TOKEN')
-SERVER='Bot Test Server'
 
 bot = commands.Bot(command_prefix='\\')
 
