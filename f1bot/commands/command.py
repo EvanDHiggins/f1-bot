@@ -2,6 +2,7 @@ import attrs
 from typing import Protocol, Type, Union
 import pandas
 import enum
+import traceback
 
 class CommandStatus(enum.Enum):
     OK = 0
@@ -64,5 +65,5 @@ class Command:
 
         except Exception as e:
             return CommandResult.error(
-                f"Internal error running command: {self.name}.\n\n{str(e)}")
+                f"Internal error running command: {self.name}.\n\n{str(e)}\n{traceback.format_exc()}")
 
