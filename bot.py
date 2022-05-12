@@ -34,7 +34,7 @@ def format_command_value(value: f1bot.commands.CommandValue) -> str:
         tabulated = tabulate.tabulate(value, headers='keys')
         return f"```{tabulated}```"
     elif isinstance(value, str):
-        return value
+        return f"```{value}```"
     else:
         return f"Error, unrecognized type: {type(value)}"
 
