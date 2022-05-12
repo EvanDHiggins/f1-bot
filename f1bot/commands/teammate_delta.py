@@ -3,7 +3,7 @@ from collections import defaultdict
 from attrs import define
 from typing import Optional
 from f1bot.lib.sessions import SessionLoader, SessionPredicate, SessionType
-from . import command
+from f1bot import command as cmd
 
 DriverAbbrev = str
 DriverNum = str
@@ -203,7 +203,7 @@ class TeammateDelta:
 
         print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
 
-TeammateDeltaCommand = command.Command(
+TeammateDeltaCommand = cmd.Command(
     name="teammate_delta",
     description="Prints the average deltas for teammates in qualifying or races.",
     help="""teammate_delta [qualifying|race]""",

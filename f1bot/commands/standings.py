@@ -1,12 +1,12 @@
-from f1bot.commands.command import CommandValue
+from f1bot import command as cmd
 from f1bot.lib.json import Compose, Extractor, JsonTableSchema
-from . import command as cmd
 import requests
 from typing import Optional
 import pandas
 import attrs
 import fastf1
 from datetime import date
+from f1bot.lib import parsers
 
 HELP_MSG="""standings $YEAR [$TYPE]
 
@@ -61,7 +61,9 @@ def build_query_url(stype: StandingsSpec, year: Optional[int]) -> str:
     return f'http://ergast.com/api/f1/{yearStr}/{stype.url_component}.json'
 
 
-def get_standings(stype: StandingsSpec, year: Optional[int] = None) -> CommandValue:
+def get_standings(
+    stype: StandingsSpec, year: Optional[int] = None
+) -> cmd.CommandValue:
     query_url = build_query_url(stype, year)
     resp = requests.get(query_url)
     standings_list_json = (
@@ -97,7 +99,7 @@ def parse_standing_type(arg: str) -> StandingsSpec:
 
 class Standings:
     """Returns standings for the drivers or constructors championships."""
-    def run(self, args: list[str]) -> CommandValue:
+    def run(self, args: list[str]) -> cmd.CommandValue:
         standing_type = DRIVER
         year = None
 
@@ -105,13 +107,14 @@ class Standings:
             standing_type = parse_standing_type(args[0].lower())
 
         if len(args) >= 2:
-            if not args[1].isdigit():
-                raise cmd.CommandError(f"Could not parse {args[1]} as a year.")
-            year = int(args[1])
-            if year < 1950:
-                raise cmd.CommandError("F1's first race was in 1950.")
-            if year > date.today().year:
-                raise cmd.CommandError("That year hasn't happened yet.")
+            year = parsers.parse_year(args[1])
+            # if not args[1].isdigit():
+                # raise cmd.CommandError(f"Could not parse {args[1]} as a year.")
+            # year = int(args[1])
+            # if year < 1950:
+                # raise cmd.CommandError("F1's first race was in 1950.")
+            # if year > date.today().year:
+                # raise cmd.CommandError("That year hasn't happened yet.")
 
         return get_standings(standing_type, year)
 

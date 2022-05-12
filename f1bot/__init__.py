@@ -1,5 +1,6 @@
 import fastf1
 import os
+from . import command
 
 def init():
     if not os.path.exists('.f1-cache'):

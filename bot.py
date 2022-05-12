@@ -1,4 +1,5 @@
 import f1bot
+from f1bot import command as cmd
 import f1bot.commands
 import os
 import tabulate
@@ -29,7 +30,7 @@ async def f1(ctx, *args: str):
         await ctx.send(format_command_value(v))
 
 
-def format_command_value(value: f1bot.commands.CommandValue) -> str:
+def format_command_value(value: cmd.CommandValue) -> str:
     if isinstance(value, pandas.DataFrame):
         tabulated = tabulate.tabulate(value, headers='keys')
         return f"```{tabulated}```"
