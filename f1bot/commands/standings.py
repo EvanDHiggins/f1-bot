@@ -1,18 +1,25 @@
+import f1bot
+
 from f1bot import command as cmd
 from f1bot.lib.json import Compose, Extractor, JsonTableSchema
-import requests
+from f1bot.lib import parsers
+
 from typing import Optional
+from datetime import date
+
+import requests
 import pandas
 import attrs
 import fastf1
-from datetime import date
-from f1bot.lib import parsers
+import argparse
 
-HELP_MSG="""standings $YEAR [$TYPE]
-
-Where $Type: [drivers|constructors|wcc|wdc]
-"""
-
+PARSER = f1bot.add_command_parser(
+        'standings',
+        description="Returns the driver standings for the year.",)
+PARSER.add_argument(
+        'standings_type', choices=['drivers', 'constructors'],
+        default='drivers', help="Determines which type of standings to fetch")
+PARSER.add_argument('year', type=parsers.parse_year)
 
 @attrs.define(frozen=True)
 class StandingsSpec:
@@ -99,22 +106,16 @@ def parse_standing_type(arg: str) -> StandingsSpec:
 
 class Standings:
     """Returns standings for the drivers or constructors championships."""
-    def run(self, args: list[str]) -> cmd.CommandValue:
-        standing_type = DRIVER
-        year = None
+    def run(self, args: argparse.Namespace) -> cmd.CommandValue:
+        standings_type = parse_standing_type(args.standings_type)
+        year = args.year
 
-        if len(args) >= 1:
-            standing_type = parse_standing_type(args[0].lower())
-
-        if len(args) >= 2:
-            year = parsers.parse_year(args[1])
-
-        return get_standings(standing_type, year)
+        if standings_type is CONSTRUCTOR and year < 1958:
+            raise cmd.CommandError(
+                "The constructors championship was not awarded until 1958.")
 
 
-StandingsCommand = cmd.Command(
-    name="standings",
-    description="Returns the driver standings for the year.",
-    help=HELP_MSG,
-    get=Standings,
-)
+        return get_standings(standings_type, year)
+
+
+StandingsCommand = cmd.Command(name="standings", get=Standings)

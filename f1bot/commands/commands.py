@@ -1,5 +1,6 @@
 from f1bot.commands import standings, teammate_delta, session_results
 from f1bot import command as cmd
+import f1bot
 
 def register_commands(*commands: cmd.Command) -> dict[str, cmd.Command]:
     return {cmd.name: cmd for cmd in commands}
@@ -18,22 +19,9 @@ def execute(args: list[str]) -> cmd.CommandResult:
         help $COMMAND: Prints the help text for $COMMAND.
         $COMMAND args...: Runs COMMAND with args.
     """
-    if len(args) < 1:
-        return cmd.CommandResult.error("No arguments.")
-
-    command_name = args[0]
-    rest = args[1:]
-
-    if command_name == 'help' and len(rest) >= 1:
-        return cmd.CommandResult.ok(COMMAND_MAP[rest[0]].help)
-    elif command_name == 'help':
-        return cmd.CommandResult.ok(help())
-
-    command = COMMAND_MAP[args[0]]
-    if len(rest) >= 1 and rest[0] == 'help':
-        return cmd.CommandResult.ok(command.help)
-
-    return command.run(rest)
+    parsed_args = f1bot.get().parse_args(args)
+    command = COMMAND_MAP[parsed_args.command]
+    return command.run(parsed_args)
 
 def help() -> str:
     text = "Available commands:\n"

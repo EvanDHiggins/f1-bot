@@ -4,14 +4,24 @@ from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
 from f1bot.lib.fmt import format_lap_time
 from f1bot.lib import parsers
+import f1bot
 import pandas
+import argparse
 
-HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
+PARSER = f1bot.add_command_parser(
+        'results', description="Show the results for a session.")
+PARSER.add_argument(
+    'year', type=parsers.parse_year)
+PARSER.add_argument('weekend', type=str)
+PARSER.add_argument('session_type', type=SessionType.parse)
 
 class SessionResults:
     """Returns the session results for a particular session."""
-    def run(self, args: list[str]) -> cmd.CommandValue:
-        year, weekend, session_type = self.parse_args(args)
+
+    def run(self, args: argparse.Namespace) -> cmd.CommandValue:
+        year: int = args.year
+        weekend: str = args.weekend
+        session_type: SessionType = args.session_type
         return self.get_results(year, weekend, session_type)
 
     def get_results(
@@ -65,9 +75,4 @@ class SessionResults:
 
         return year, args[1], session_type
 
-SessionResultsCommand = cmd.Command(
-    name="results",
-    description="Returns the results for a session.",
-    help=HELP_MSG,
-    get=SessionResults,
-)
+SessionResultsCommand = cmd.Command(name="results", get=SessionResults)

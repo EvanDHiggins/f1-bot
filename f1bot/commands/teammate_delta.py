@@ -1,3 +1,5 @@
+import f1bot
+
 from fastf1.core import SessionResults, Session
 from collections import defaultdict
 from attrs import define
@@ -5,9 +7,12 @@ from typing import Optional
 from f1bot.lib.sessions import SessionLoader, SessionPredicate, SessionType
 from f1bot import command as cmd
 
+import argparse
+
 DriverAbbrev = str
 DriverNum = str
 MINIMUM_SESSION_THRESHOLD = 18
+
 
 class Average:
     def __init__(self):
@@ -53,12 +58,20 @@ class AggregateDriverData:
     avg_teammate_delta: float
     num_sessions: int
 
+PARSER = f1bot.add_command_parser(
+    'teammate_delta',
+    description=(
+        "Prints the average deltas for teammates in qualifying or races."))
+PARSER.add_argument('session_type', choices=['race', 'qualifying'])
+
+
 class TeammateDelta:
 
-    def run(self, args: list[str]) -> str:
-        if 'race'.startswith(args[0]):
+    def run(self, args: argparse.Namespace) -> str:
+
+        if args.session_type == 'race':
             self.race()
-        elif 'qualifying'.startswith(args[0]):
+        elif args.session_type == 'qualifying':
             self.qualifying()
 
         # TODO: Make these return the real output.
@@ -203,9 +216,4 @@ class TeammateDelta:
 
         print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
 
-TeammateDeltaCommand = cmd.Command(
-    name="teammate_delta",
-    description="Prints the average deltas for teammates in qualifying or races.",
-    help="""teammate_delta [qualifying|race]""",
-    get=TeammateDelta,
-)
+TeammateDeltaCommand = cmd.Command(name="teammate_delta", get=TeammateDelta)

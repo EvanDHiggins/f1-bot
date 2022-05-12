@@ -3,6 +3,8 @@ from typing import Protocol, Type, Union
 import pandas
 import enum
 import traceback
+import argparse
+from f1bot import argparser
 
 class CommandStatus(enum.Enum):
     OK = 0
@@ -32,7 +34,7 @@ class CommandResult:
 
 
 class Runner(Protocol):
-    def run(self, args: list[str]) -> CommandValue:
+    def run(self, args: argparse.Namespace) -> CommandValue:
         raise NotImplementedError
 
 
@@ -49,20 +51,16 @@ class CommandError(Exception):
 @attrs.define(frozen=True)
 class Command:
     name: str
-    description: str
-    help: str
 
     # Type constructor for a Runner
     get: Type[Runner]
 
-    def run(self, args: list[str]) -> CommandResult:
+    def run(self, args: argparse.Namespace) -> CommandResult:
         try:
             return CommandResult.ok(self.get().run(args))
         except CommandError as e:
             return CommandResult.error(
-                f"Failed to run command '{self.name}' with error:\n"
-                f"{str(e)}\n\n\n{self.help}"
-            )
+                f"Failed to run command '{self.name}' with error:\n{str(e)}")
 
         except Exception as e:
             return CommandResult.error(
