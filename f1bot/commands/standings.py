@@ -1,7 +1,8 @@
 from f1bot.commands.command import CommandValue
+from f1bot.lib.json import Compose, Extractor, JsonTableSchema
 from . import command as cmd
 import requests
-from typing import Optional, Any, Tuple, Union, Protocol, Callable
+from typing import Optional
 import pandas
 import attrs
 import fastf1
@@ -11,49 +12,6 @@ HELP_MSG="""standings $YEAR [$TYPE]
 
 Where $Type: [drivers|constructors|wcc|wdc]
 """
-
-class JsonExtractor(Protocol):
-    def extract(self, js: dict[str, Any]) -> str:
-        raise NotImplementedError
-
-
-@attrs.define()
-class Compose:
-    first: JsonExtractor
-    second: JsonExtractor
-    binary_op: Callable[[str, str], str]
-
-    def extract(self, js: dict[str, Any]) -> str:
-        return self.binary_op(self.first.extract(js), self.second.extract(js))
-
-
-@attrs.define()
-class Extractor:
-    keys: list[Union[str, int]]
-
-    def extract(self, js: dict[str, Any]) -> str:
-        value: Any = js
-        for key in self.keys:
-            value = value[key]
-        if value is dict or value is list:
-            raise ValueError(
-                "Incorrectly specified row extraction from ergast JSON response."
-                f"Used keys {self.keys} but resolved to {value} from object:\n\n{js}")
-        return value
-
-
-@attrs.define()
-class JsonTableSchema:
-    columns: list[Tuple[str, JsonExtractor]]
-
-    def extract(self, js: dict[str, Any]) -> list[str]:
-        rows = []
-        for column in self.columns:
-            rows.append(column[1].extract(js))
-        return rows
-
-    def column_names(self) -> list[str]:
-        return list(col[0] for col in self.columns)
 
 
 @attrs.define(frozen=True)
