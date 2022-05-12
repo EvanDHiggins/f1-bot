@@ -8,7 +8,8 @@ class CommandStatus(enum.Enum):
     OK = 0
     INTERNAL_ERROR = 1
 
-CommandValue = Union[str, pandas.DataFrame]
+CommandPrimitive = Union[str, pandas.DataFrame]
+CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]
 
 @attrs.define(frozen=True)
 class CommandResult:

@@ -4,7 +4,10 @@ import f1bot
 
 def main():
     f1bot.init()
-    print(commands.execute(sys.argv[1:]).value)
+    resp = commands.execute(sys.argv[1:]).value
+    respList = resp if isinstance(resp, list) else [resp]
+    for v in respList:
+        print(v)
 
 if __name__ == "__main__":
     main()

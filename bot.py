@@ -23,13 +23,21 @@ async def f1(ctx, *args: str):
         await ctx.send(f'{result.status.name}: {result.value}')
         return
 
-    if isinstance(result.value, pandas.DataFrame):
-        tabulated = tabulate.tabulate(result.value, headers='keys')
-        await ctx.send(f"```{tabulated}```")
-    elif isinstance(result.value, str):
-        await ctx.send(result.value)
+    results = result.value if isinstance(result.value, list) else [result.value]
+
+    for v in results:
+        await ctx.send(format_command_value(v))
+
+
+def format_command_value(value: f1bot.commands.CommandValue) -> str:
+    if isinstance(value, pandas.DataFrame):
+        tabulated = tabulate.tabulate(value, headers='keys')
+        return f"```{tabulated}```"
+    elif isinstance(value, str):
+        return value
     else:
-        await ctx.send(f"Error, unrecognized type: {type(result.value)}")
+        return f"Error, unrecognized type: {type(value)}"
+
 
 def main():
     f1bot.init()
