@@ -3,6 +3,7 @@ from typing import Tuple
 from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
 from f1bot.utils.fmt import format_lap_time
+from f1bot.lib import parsers
 import pandas
 
 HELP_MSG="""results $YEAR $WEEKEND [Q|R|FPN]"""
@@ -53,7 +54,7 @@ class SessionResults:
             raise cmd.CommandError(
                 f"Not enough arguments. Expected 3, found {len(args)}.")
 
-        year = int(args[0])
+        year = parsers.parse_year(args[0])
         if year < 1950:
             raise cmd.CommandError("Formula 1 started in 1950...")
 

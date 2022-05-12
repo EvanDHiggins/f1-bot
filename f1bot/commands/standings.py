@@ -108,13 +108,6 @@ class Standings:
 
         if len(args) >= 2:
             year = parsers.parse_year(args[1])
-            # if not args[1].isdigit():
-                # raise cmd.CommandError(f"Could not parse {args[1]} as a year.")
-            # year = int(args[1])
-            # if year < 1950:
-                # raise cmd.CommandError("F1's first race was in 1950.")
-            # if year > date.today().year:
-                # raise cmd.CommandError("That year hasn't happened yet.")
 
         return get_standings(standing_type, year)
 
