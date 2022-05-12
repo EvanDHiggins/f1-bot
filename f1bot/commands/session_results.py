@@ -2,7 +2,7 @@ from f1bot import command as cmd
 from typing import Tuple
 from fastf1.core import Session
 from f1bot.lib.sessions import SessionType, SessionLoader
-from f1bot.utils.fmt import format_lap_time
+from f1bot.lib.fmt import format_lap_time
 from f1bot.lib import parsers
 import pandas
 
