@@ -4,7 +4,6 @@ import pandas
 import enum
 import traceback
 import argparse
-from f1bot import argparser
 
 class CommandStatus(enum.Enum):
     OK = 0
