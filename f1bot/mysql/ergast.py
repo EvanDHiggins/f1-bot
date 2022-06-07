@@ -48,6 +48,7 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
             r.name as "Race Name",
             r.round as "Round",
             r.date as "Date",
+            r.time as "Time",
             c.name as "Circuit Name",
             c.location as "Location"
         FROM races r
@@ -58,7 +59,7 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
 
     return transform_to_dataframe(
             result, 
-            ["Race Name", "Round", "Date", "Circuit Name", "Location"])
+            ["Race Name", "Round", "Date", "Time", "Circuit Name", "Location"])
 
 @engine.with_ergast
 def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
