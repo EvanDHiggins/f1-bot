@@ -46,14 +46,21 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
         # TODO: disambiguate between column names returned by this query
         # both circuits and races have a "name" field.
         f"""
-        SELECT *
+        SELECT
+            r.name as "Race Name",
+            r.round as "Round",
+            r.date as "Date",
+            c.name as "Circuit Name",
+            c.location as "Location"
         FROM races r
             INNER JOIN circuits c
             ON r.circuitId = c.circuitId
         WHERE year = {year}
         ORDER BY round"""))
 
-    return transform_to_dataframe(result, [""])
+    return transform_to_dataframe(
+            result, 
+            ["Race Name", "Round", "Date", "Circuit Name", "Location"])
 
 @engine.with_ergast
 def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:

@@ -6,7 +6,7 @@ import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 
 
-MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD')
+MYSQL_PASSWORD = os.environ['MYSQL_PASSWORD']
 
 ergast_engine = sql.create_engine(f"mysql+mysqldb://evanhiggins:{MYSQL_PASSWORD}@localhost/ergast")
 

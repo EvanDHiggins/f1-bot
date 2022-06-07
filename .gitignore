@@ -1,5 +1,6 @@
 .f1-cache
 env/*
+*.pyc
 __pycache__
 mysql2sqlite
 f1db.sql*
