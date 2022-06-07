@@ -1,4 +1,4 @@
-from f1bot.commands import standings, teammate_delta, session_results, standings_mysql
+from f1bot.commands import teammate_delta, session_results, standings
 from f1bot import command as cmd
 import f1bot
 
@@ -8,8 +8,7 @@ def register_commands(*commands: cmd.Command) -> dict[str, cmd.Command]:
 COMMAND_MAP = register_commands(
     teammate_delta.TeammateDeltaCommand,
     session_results.SessionResultsCommand,
-    # standings.StandingsCommand,
-    standings_mysql.StandingsCommand,
+    standings.StandingsCommand,
 )
 
 def execute(args: list[str]) -> cmd.CommandResult:
