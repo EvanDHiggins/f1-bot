@@ -37,7 +37,7 @@ class Standings:
 
         # TODO: Make it so that this defers to fastf1 if we're requesting the
         # current year. Ergast won't be as up to date as we'd like.
-        year = args.year
+        year: int = args.year
 
         if standings_type == StandingsType.DRIVERS:
             # TODO: This should merge the forename and surname column into one.

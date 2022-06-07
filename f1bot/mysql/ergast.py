@@ -40,6 +40,20 @@ def get_last_race_of_year(conn: sqlengine.Connection, year: int) -> RaceId:
 
     return row['raceId']
 
+@engine.with_ergast
+def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
+    result = conn.execute(sql.text(
+        # TODO: disambiguate between column names returned by this query
+        # both circuits and races have a "name" field.
+        f"""
+        SELECT *
+        FROM races r
+            INNER JOIN circuits c
+            ON r.circuitId = c.circuitId
+        WHERE year = {year}
+        ORDER BY round"""))
+
+    return transform_to_dataframe(result, [""])
 
 @engine.with_ergast
 def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:

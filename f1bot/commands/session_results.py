@@ -1,17 +1,16 @@
 from f1bot import command as cmd
 from typing import Tuple
 from fastf1.core import Session
-from f1bot.lib.sessions import SessionType, SessionLoader
-from f1bot.lib.fmt import format_lap_time
 from f1bot.lib import parsers
+from f1bot.lib.fmt import format_lap_time
+from f1bot.lib.sessions import SessionType, SessionLoader
 import f1bot
 import pandas
 import argparse
 
 PARSER = f1bot.add_command_parser(
         'results', description="Show the results for a session.")
-PARSER.add_argument(
-    'year', type=parsers.parse_year)
+PARSER.add_argument('year', type=parsers.parse_year)
 PARSER.add_argument('weekend', type=str)
 PARSER.add_argument('session_type', type=SessionType.parse)
 
@@ -75,4 +74,4 @@ class SessionResults:
 
         return year, args[1], session_type
 
-SessionResultsCommand = cmd.Command(name="results", get=SessionResults)
+SessionResultsCommand = cmd.Command(name='results', get=SessionResults)

@@ -1,4 +1,4 @@
-from f1bot.commands import teammate_delta, session_results, standings
+from f1bot.commands import teammate_delta, session_results, standings, schedule
 from f1bot import command as cmd
 import f1bot
 
@@ -9,6 +9,7 @@ COMMAND_MAP = register_commands(
     teammate_delta.TeammateDeltaCommand,
     session_results.SessionResultsCommand,
     standings.StandingsCommand,
+    schedule.ScheduleCommand,
 )
 
 def execute(args: list[str]) -> cmd.CommandResult:
