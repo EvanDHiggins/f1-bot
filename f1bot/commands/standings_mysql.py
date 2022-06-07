@@ -8,13 +8,13 @@ from f1bot.mysql import ergast
 import argparse
 import enum
 
-NAME = 'stds'
+NAME = 'standings'
 
 PARSER = f1bot.add_command_parser(
         NAME,
         description="Returns the driver standings for the year.",)
 PARSER.add_argument(
-        'standings_type', choices=['drivers', 'constructors', 'wdc', 'wcc'],
+        'standings_type', choices=['drivers', 'wdc', 'constructors', 'wcc'],
         default='drivers', help="Determines which type of standings to fetch")
 PARSER.add_argument('year', type=parsers.parse_year)
 
@@ -38,13 +38,15 @@ class Standings:
         # TODO: Make it so that this defers to fastf1 if we're requesting the
         # current year. Ergast won't be as up to date as we'd like.
         year = args.year
+
         if standings_type == StandingsType.DRIVERS:
             # TODO: This should merge the forename and surname column into one.
             return ergast.get_driver_standings(year)
-        # TODO: Implement constructor standings, too.
 
-        # TODO: Remove the old command and replace it with this one.
-        return ""
+        if year < 1958:
+            raise cmd.CommandError(
+                "The constructors championship was not awarded until 1958.")
+        return ergast.get_constructor_standings(year)
 
 
 StandingsCommand = cmd.Command(name=NAME, get=Standings)

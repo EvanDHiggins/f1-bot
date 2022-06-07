@@ -114,7 +114,6 @@ class Standings:
             raise cmd.CommandError(
                 "The constructors championship was not awarded until 1958.")
 
-
         return get_standings(standings_type, year)
 
 

@@ -8,7 +8,7 @@ def register_commands(*commands: cmd.Command) -> dict[str, cmd.Command]:
 COMMAND_MAP = register_commands(
     teammate_delta.TeammateDeltaCommand,
     session_results.SessionResultsCommand,
-    standings.StandingsCommand,
+    # standings.StandingsCommand,
     standings_mysql.StandingsCommand,
 )
 
@@ -23,6 +23,7 @@ def execute(args: list[str]) -> cmd.CommandResult:
     parsed_args = f1bot.get().parse_args(args)
     command = COMMAND_MAP[parsed_args.command]
     return command.run(parsed_args)
+
 
 def help() -> str:
     text = "Available commands:\n"
