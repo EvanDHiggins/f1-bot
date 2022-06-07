@@ -54,8 +54,7 @@ def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.D
         ORDER BY position
         """
     ))
-    return transform_to_dataframe(
-            result, ["name", "position", "points", "url"])
+    return transform_to_dataframe(result, ["name", "position", "points"])
 
 @engine.with_ergast
 def get_driver_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:

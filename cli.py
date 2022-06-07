@@ -11,7 +11,7 @@ def main():
     # By default pandas.DataFrame.__repr__ only prints out the first and last
     # few columns if the max is above a threshold. We want to alwasy see the
     # results, though.
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
         for v in respList:
             print(v)
 
