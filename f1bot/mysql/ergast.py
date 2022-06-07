@@ -43,8 +43,6 @@ def get_last_race_of_year(conn: sqlengine.Connection, year: int) -> RaceId:
 @engine.with_ergast
 def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
     result = conn.execute(sql.text(
-        # TODO: disambiguate between column names returned by this query
-        # both circuits and races have a "name" field.
         f"""
         SELECT
             r.name as "Race Name",
