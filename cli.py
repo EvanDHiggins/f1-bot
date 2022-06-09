@@ -13,7 +13,10 @@ def main():
     # results, though.
     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
         for v in respList:
-            print(v)
+            if isinstance(v, pd.DataFrame):
+                print(v.to_string(index=False))
+            else:
+                print(v)
 
 if __name__ == "__main__":
     main()
