@@ -7,6 +7,8 @@ from f1bot.mysql import ergast
 
 import argparse
 import enum
+import pandas
+import datetime as dt
 
 NAME = 'standings'
 
@@ -30,23 +32,28 @@ def parse_standing_type(arg: str) -> StandingsType:
         return StandingsType.CONSTRUCTORS
     raise cmd.CommandError(f"Invalid argument: {arg}")
 
+def standings_from_ergast(standings_type: StandingsType, year: int) -> pandas.DataFrame:
+    if standings_type == StandingsType.DRIVERS:
+        # TODO: This should merge the forename and surname column into one.
+        return ergast.get_driver_standings(year)
+    return ergast.get_constructor_standings(year)
 
 class Standings:
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         standings_type = parse_standing_type(args.standings_type)
 
-        # TODO: Make it so that this defers to fastf1 if we're requesting the
-        # current year. Ergast won't be as up to date as we'd like.
         year: int = args.year
-
-        if standings_type == StandingsType.DRIVERS:
-            # TODO: This should merge the forename and surname column into one.
-            return ergast.get_driver_standings(year)
-
-        if year < 1958:
+        if standings_type == StandingsType.CONSTRUCTORS and year < 1958:
             raise cmd.CommandError(
                 "The constructors championship was not awarded until 1958.")
-        return ergast.get_constructor_standings(year)
+
+        # TODO: Handle the current year differently. The database will usually
+        # be a little stale, but for standings we want to always include the
+        # most up to date information. Fastf1 doesn't seem to provide this,
+        # so we'll probably want to get it from ergast.
+        return standings_from_ergast(standings_type, year)
+
+
 
 
 StandingsCommand = cmd.Command(name=NAME, get=Standings)
