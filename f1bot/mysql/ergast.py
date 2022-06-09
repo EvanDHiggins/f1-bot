@@ -5,6 +5,7 @@ from f1bot.mysql import engine
 import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 import pandas
+import attr
 
 RaceId = int
 
@@ -40,17 +41,36 @@ def get_last_race_of_year(conn: sqlengine.Connection, year: int) -> RaceId:
 
     return row['raceId']
 
+@attr.define
+class Event:
+    pass
+
+
+s = """
+Name, Date, Time (PT), Time (MT), Time (CT), Time (ET)
+
+FP1, ...
+FP2, ...
+FP3, ...
+Qualifying, ...
+Azerbaijan GP, June 11th, PT, MT, CT, ET
+"""
+
 @engine.with_ergast
 def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
     result = conn.execute(sql.text(
         f"""
         SELECT
-            r.name as "Race Name",
-            r.round as "Round",
-            r.date as "Date",
-            r.time as "Time",
-            c.name as "Circuit Name",
-            c.location as "Location"
+            r.name as "race_name",
+            r.round as "round",
+            r.date as "race_date",
+            r.time as "race_time",
+            c.name as "circuit_name",
+            c.location as "location",
+            fp1_date, fp1_time,
+            fp2_date, fp2_time,
+            fp3_date, fp3_time,
+            quali_date, quali_time
         FROM races r
             INNER JOIN circuits c
             ON r.circuitId = c.circuitId
@@ -59,7 +79,12 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
 
     return transform_to_dataframe(
             result, 
-            ["Race Name", "Round", "Date", "Time", "Circuit Name", "Location"])
+            ["race_name", "round", "circuit_name", "location",
+             "race_time", "race_date",
+             "fp1_time", "fp1_date",
+             "fp2_time", "fp2_date",
+             "fp3_time", "fp3_date",
+             "quali_time", "quali_date"])
 
 @engine.with_ergast
 def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
@@ -75,6 +100,7 @@ def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.D
         """
     ))
     return transform_to_dataframe(result, ["name", "position", "points"])
+
 
 @engine.with_ergast
 def get_driver_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
