@@ -1,9 +1,12 @@
+from typing_extensions import TypeGuard
 import attrs
-from typing import Protocol, Type, Union
+from typing import Protocol, Type, Union, Any, get_type_hints, Optional, TypeVar, runtime_checkable
 import pandas
 import enum
 import traceback
 import argparse
+import abc
+
 
 class CommandStatus(enum.Enum):
     OK = 0
@@ -32,7 +35,21 @@ class CommandResult:
         return self.status == CommandStatus.INTERNAL_ERROR
 
 
+@runtime_checkable
 class Runner(Protocol):
+    def run(self, args: argparse.Namespace) -> CommandValue:
+        raise NotImplementedError
+
+@runtime_checkable
+class Runnable(Protocol):
+    @classmethod
+    def name(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def description(cls) -> str:
+        raise NotImplementedError
+
     def run(self, args: argparse.Namespace) -> CommandValue:
         raise NotImplementedError
 
@@ -45,6 +62,48 @@ class CommandError(Exception):
     errors) should just raise any exception.
     """
     pass
+
+T = TypeVar('T', bound='type')
+
+commands: dict[str, Type[Runnable]] = {}
+
+class CommandRegistrar(type):
+    def __init__(cls, name: str, bases: Any, clsdict: dict[str, Any]):
+        super(CommandRegistrar, cls).__init__(name, bases, clsdict)
+
+        # Ignore the first derived class. This will always be AutoCommand
+        if len(cls.mro()) <= 2:
+            if name != 'AutoCommand':
+                raise ValueError(
+                    'Only "AutoCommand" can use CommandRegistrar as its metaclass.')
+            return
+
+        if not issubclass(cls, Runnable):
+            raise ValueError(
+                "All classes with metaclass CommandRegistrar must implement "
+                f"'Runnable'. Class '{name}' does not. mro = {len(cls.mro())}")
+
+        commands[cls.name()] = cls
+        print(commands)
+
+"""
+TODO: Replace "'class Command' with 'class LegacyCommand'"
+"""
+
+class AutoCommand(metaclass=CommandRegistrar):
+    pass
+
+class FirstCommand(AutoCommand):
+    @classmethod
+    def name(cls) -> str:
+        return "first"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Some stuff."
+
+    def run(self, args: argparse.Namespace) -> CommandValue:
+        return ""
 
 
 @attrs.define(frozen=True)
