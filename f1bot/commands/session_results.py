@@ -14,8 +14,12 @@ PARSER.add_argument('year', type=parsers.parse_year)
 PARSER.add_argument('weekend', type=str)
 PARSER.add_argument('session_type', type=SessionType.parse)
 
-class SessionResults:
+class SessionResults(cmd.Command):
     """Returns the session results for a particular session."""
+
+    @classmethod
+    def name(cls) -> str:
+        return 'results'
 
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         year: int = args.year
@@ -73,5 +77,3 @@ class SessionResults:
                 f"Could not parse session string: {args[2]}")
 
         return year, args[1], session_type
-
-SessionResultsCommand = cmd.Command(name='results', get=SessionResults)

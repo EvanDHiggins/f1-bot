@@ -38,7 +38,12 @@ def standings_from_ergast(standings_type: StandingsType, year: int) -> pandas.Da
         return ergast.get_driver_standings(year)
     return ergast.get_constructor_standings(year)
 
-class Standings:
+class Standings(cmd.Command):
+
+    @classmethod
+    def name(cls) -> str:
+        return NAME
+
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         standings_type = parse_standing_type(args.standings_type)
 
@@ -52,8 +57,3 @@ class Standings:
         # most up to date information. Fastf1 doesn't seem to provide this,
         # so we'll probably want to get it from ergast.
         return standings_from_ergast(standings_type, year)
-
-
-
-
-StandingsCommand = cmd.Command(name=NAME, get=Standings)

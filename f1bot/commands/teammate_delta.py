@@ -65,7 +65,10 @@ PARSER = f1bot.add_command_parser(
 PARSER.add_argument('session_type', choices=['race', 'qualifying'])
 
 
-class TeammateDelta:
+class TeammateDelta(cmd.Command):
+    @classmethod
+    def name(cls) -> str:
+        return 'teammate_delta'
 
     def run(self, args: argparse.Namespace) -> str:
 
@@ -215,5 +218,3 @@ class TeammateDelta:
             print(f'{idx+1}: {data.name} \n\tAvg: {data.avg_teammate_delta:7.4f}, #Sess: {data.num_sessions}')
 
         print(f'Encountered {len(session_loader.corrupted_sessions())} errors.')
-
-TeammateDeltaCommand = cmd.Command(name="teammate_delta", get=TeammateDelta)

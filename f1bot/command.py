@@ -1,19 +1,22 @@
-from typing_extensions import TypeGuard
 import attrs
-from typing import Protocol, Type, Union, Any, get_type_hints, Optional, TypeVar, runtime_checkable
+from typing import Protocol, Type, Union, Any,  runtime_checkable
 import pandas
 import enum
 import traceback
 import argparse
-import abc
+import f1bot
 
+CommandPrimitive = Union[str, pandas.DataFrame]
+CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]
+
+_commands: dict[str, Type['Runnable']] = {}
+
+def get_command_dict() -> dict[str, Type['Runnable']]:
+    return _commands
 
 class CommandStatus(enum.Enum):
     OK = 0
     INTERNAL_ERROR = 1
-
-CommandPrimitive = Union[str, pandas.DataFrame]
-CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]
 
 @attrs.define(frozen=True)
 class CommandResult:
@@ -36,18 +39,9 @@ class CommandResult:
 
 
 @runtime_checkable
-class Runner(Protocol):
-    def run(self, args: argparse.Namespace) -> CommandValue:
-        raise NotImplementedError
-
-@runtime_checkable
 class Runnable(Protocol):
     @classmethod
     def name(cls) -> str:
-        raise NotImplementedError
-
-    @classmethod
-    def description(cls) -> str:
         raise NotImplementedError
 
     def run(self, args: argparse.Namespace) -> CommandValue:
@@ -62,10 +56,6 @@ class CommandError(Exception):
     errors) should just raise any exception.
     """
     pass
-
-T = TypeVar('T', bound='type')
-
-commands: dict[str, Type[Runnable]] = {}
 
 class CommandRegistrar(type):
     def __init__(cls, name: str, bases: Any, clsdict: dict[str, Any]):
@@ -83,44 +73,27 @@ class CommandRegistrar(type):
                 "All classes with metaclass CommandRegistrar must implement "
                 f"'Runnable'. Class '{name}' does not. mro = {len(cls.mro())}")
 
-        commands[cls.name()] = cls
-        print(commands)
+        _commands[cls.name()] = cls
 
-"""
-TODO: Replace "'class Command' with 'class LegacyCommand'"
-"""
-
-class AutoCommand(metaclass=CommandRegistrar):
+class Command(metaclass=CommandRegistrar):
     pass
 
-class FirstCommand(AutoCommand):
-    @classmethod
-    def name(cls) -> str:
-        return "first"
+def run_command(args: list[str]) -> CommandResult:
+    """Looks up a command and runs it.
 
-    @classmethod
-    def description(cls) -> str:
-        return "Some stuff."
+    Supports three forms:
+        help: Prints the availabe commands and their descriptions.
+        help $COMMAND: Prints the help text for $COMMAND.
+        $COMMAND args...: Runs COMMAND with args.
+    """
+    parsed_args = f1bot.get().parse_args(args)
+    command = get_command_dict()[parsed_args.command]
+    try:
+        return CommandResult.ok(command().run(parsed_args))
+    except CommandError as e:
+        return CommandResult.error(
+            f"Failed to run command '{command.name}' with error:\n{str(e)}")
 
-    def run(self, args: argparse.Namespace) -> CommandValue:
-        return ""
-
-
-@attrs.define(frozen=True)
-class Command:
-    name: str
-
-    # Type constructor for a Runner
-    get: Type[Runner]
-
-    def run(self, args: argparse.Namespace) -> CommandResult:
-        try:
-            return CommandResult.ok(self.get().run(args))
-        except CommandError as e:
-            return CommandResult.error(
-                f"Failed to run command '{self.name}' with error:\n{str(e)}")
-
-        except Exception as e:
-            return CommandResult.error(
-                f"Internal error running command: {self.name}.\n\n{str(e)}\n{traceback.format_exc()}")
-
+    except Exception as e:
+        return CommandResult.error(
+            f"Internal error running command: {command.name}.\n\n{str(e)}\n{traceback.format_exc()}")

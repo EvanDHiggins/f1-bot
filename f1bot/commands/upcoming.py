@@ -56,7 +56,12 @@ def get_event_times(
 def build_datetime(date: dt.date, time: dt.timedelta) -> dt.datetime:
     return dt.datetime(year=date.year, month=date.month, day=date.day) + time
 
-class Upcoming:
+class Upcoming(cmd.Command):
+
+    @classmethod
+    def name(cls) -> str:
+        return 'upcoming'
+
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         # The schedule is ordered by date
         schedule = ergast.get_schedule(dt.date.today().year)
@@ -72,5 +77,3 @@ class Upcoming:
 
         raise cmd.CommandError(
             "Couldn't find an event that hasn't happened yet.")
-
-UpcomingCommand = cmd.Command(name='upcoming', get=Upcoming)
