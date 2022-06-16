@@ -1,10 +1,12 @@
+import f1bot
+
 import attrs
-from typing import Protocol, Type, Union, Any,  runtime_checkable
 import pandas
 import enum
 import traceback
 import argparse
-import f1bot
+
+from typing import Protocol, Type, Union, Any,  runtime_checkable
 
 CommandPrimitive = Union[str, pandas.DataFrame]
 CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]

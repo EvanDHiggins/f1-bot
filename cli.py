@@ -1,11 +1,12 @@
 import sys
-from f1bot import commands
 import f1bot
+from f1bot.commands import Schedule
+from f1bot import command as cmd
 import pandas as pd
 
 def main():
     f1bot.init()
-    resp = commands.execute(sys.argv[1:]).value
+    resp = cmd.run_command(sys.argv[1:]).value
     respList = resp if isinstance(resp, list) else [resp]
 
     # By default pandas.DataFrame.__repr__ only prints out the first and last
