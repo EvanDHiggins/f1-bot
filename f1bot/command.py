@@ -63,15 +63,15 @@ class CommandRegistrar(type):
 
         # Ignore the first derived class. This will always be AutoCommand
         if len(cls.mro()) <= 2:
-            if name != 'AutoCommand':
+            if name != 'Command':
                 raise ValueError(
-                    'Only "AutoCommand" can use CommandRegistrar as its metaclass.')
+                    'Only "Command" can use CommandRegistrar as its metaclass.')
             return
 
         if not issubclass(cls, Runnable):
             raise ValueError(
                 "All classes with metaclass CommandRegistrar must implement "
-                f"'Runnable'. Class '{name}' does not. mro = {len(cls.mro())}")
+                f"'Runnable'. Class '{name}' does not.")
 
         _commands[cls.name()] = cls
 
