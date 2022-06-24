@@ -11,6 +11,7 @@ PARSER = f1bot.add_command_parser(
 PARSER.add_argument('year', type=parsers.parse_year)
 
 class Schedule(cmd.Command):
+
     @classmethod
     def name(cls) -> str:
         return 'schedule'

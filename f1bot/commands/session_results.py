@@ -4,6 +4,7 @@ from fastf1.core import Session
 from f1bot.lib import parsers
 from f1bot.lib.fmt import format_lap_time
 from f1bot.lib.sessions import SessionType, SessionLoader
+from f1bot.mysql import ergast
 import f1bot
 import pandas
 import argparse
@@ -25,6 +26,10 @@ class SessionResults(cmd.Command):
         year: int = args.year
         weekend: str = args.weekend
         session_type: SessionType = args.session_type
+        race_id = ergast.resolve_fuzzy_race_query(year, weekend)
+        if race_id is None:
+            raise cmd.CommandError(f'Could not find race \'{weekend}\' in {year}.')
+        return ""
         return self.get_results(year, weekend, session_type)
 
     def get_results(

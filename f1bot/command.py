@@ -42,6 +42,7 @@ class CommandResult:
 
 @runtime_checkable
 class Runnable(Protocol):
+
     @classmethod
     def name(cls) -> str:
         raise NotImplementedError
@@ -80,6 +81,7 @@ class CommandRegistrar(type):
 class Command(metaclass=CommandRegistrar):
     pass
 
+
 def run_command(args: list[str]) -> CommandResult:
     """Looks up a command and runs it.
 
@@ -94,7 +96,7 @@ def run_command(args: list[str]) -> CommandResult:
         return CommandResult.ok(command().run(parsed_args))
     except CommandError as e:
         return CommandResult.error(
-            f"Failed to run command '{command.name}' with error:\n{str(e)}")
+            f"Failed to run command '{command.name()}' with error:\n{str(e)}")
 
     except Exception as e:
         return CommandResult.error(

@@ -7,6 +7,8 @@ import sqlalchemy.engine as sqlengine
 import pandas
 import attr
 
+from typing import Optional
+
 RaceId = int
 
 def transform_to_dataframe(
@@ -100,6 +102,27 @@ def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.D
         """
     ))
     return transform_to_dataframe(result, ["name", "position", "points"])
+
+@engine.with_ergast
+def resolve_fuzzy_race_query(
+    conn: sqlengine.Connection, year: int, query: str
+) -> Optional[RaceId]:
+    match_by_race_name = conn.execute(sql.text(
+        """
+        SELECT *
+        FROM races
+        WHERE
+            name LIKE CONCAT('%', :race_name, '%')
+            AND year = :year
+        """), race_name=query, year=year)
+    if match_by_race_name.rowcount == 1:
+        race = match_by_race_name.first()
+        if race is None:
+            raise ValueError(
+                'Expected one result, found None?! For query '
+                f'(year={year}, q={query})')
+        return int(race['raceId'])
+    return None
 
 
 @engine.with_ergast
