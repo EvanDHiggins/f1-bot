@@ -46,7 +46,11 @@ def run_command(args: list[str]) -> CommandResult:
         help $COMMAND: Prints the help text for $COMMAND.
         $COMMAND args...: Runs COMMAND with args.
     """
-    parsed_args = argparser.get().parse_args(args)
+    try:
+        parsed_args = argparser.get().parse_args(args)
+    except CommandError as e:
+        return CommandResult.error(str(e))
+
     command = REGISTRY.get(parsed_args.command).command_constructor
     try:
         return CommandResult.ok(command().run(parsed_args))

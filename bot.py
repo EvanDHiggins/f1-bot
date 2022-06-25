@@ -19,7 +19,7 @@ async def f1(ctx, *args: str):
 
     Args are passed straight through to the underlying CLI.
     """
-    result = f1bot.commands.execute(list(args))
+    result = cmd.run_command(list(args))
     if result.is_error():
         await ctx.send(f'{result.status.name}: {result.value}')
         return

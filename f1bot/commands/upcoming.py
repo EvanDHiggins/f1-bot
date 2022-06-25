@@ -10,20 +10,21 @@ import datetime as dt
 from typing import Tuple
 
 def format_event(event: pandas.Series) -> cmd.CommandValue:
-    header_columns = ["Name", "Round", "Circuit", "Location"]
-    header = pandas.DataFrame(
-        columns=header_columns,
-        data=[[event["race_name"], event["round"], event["circuit_name"], event["location"]]])
+    header = f"Round {event['round']}: {event['race_name']} -- {event['circuit_name']}"
 
 
-    body_columns = ["Event", "Date", "Time (PT)", "Time (MT)", "Time (CT)", "Time (ET)"]
+    body_columns = [
+        "Event", "Date", "Time (PT)", "Time (MT)", "Time (CT)", "Time (ET)"]
+
+    def fmt_date(date: str, time: str) -> list[str]:
+        return list(get_event_times(event[date], event[time]))
 
     rows = [
-        ["Race"] + list(get_event_times(event["race_date"], event["race_time"])),
-        ["Qualifying"] + list(get_event_times(event["quali_date"], event["quali_time"])),
-        ["FP3"] + list(get_event_times(event["fp3_date"], event["fp3_time"])),
-        ["FP2"] + list(get_event_times(event["fp2_date"], event["fp2_time"])),
-        ["FP1"] + list(get_event_times(event["fp1_date"], event["fp1_time"])),
+        ["Race"] + fmt_date("race_date", "race_time"),
+        ["Qualifying"] + fmt_date("quali_date", "quali_time"),
+        ["FP3"] + fmt_date("fp3_date", "fp3_time"),
+        ["FP2"] + fmt_date("fp2_date", "fp2_time"),
+        ["FP1"] + fmt_date("fp1_date", "fp1_time"),
     ]
 
     body = pandas.DataFrame(data=rows, columns=body_columns)
