@@ -20,7 +20,7 @@ class Schedule(cmd.Command):
 
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         year: int = args.year
-        schedule = ergast.get_schedule(year).drop(columns=["Time"])
+        schedule = ergast.get_schedule(year)
         if schedule is not None:
             return schedule
         raise cmd.CommandError(

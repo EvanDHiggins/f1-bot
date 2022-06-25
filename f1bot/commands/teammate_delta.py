@@ -64,6 +64,7 @@ class TeammateDelta(cmd.Command):
             name="teammate_delta",
             description=(
                 "Average delta between teammates for a given session type."),
+            disabled=True,
         )
 
     @classmethod
