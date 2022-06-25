@@ -1,5 +1,3 @@
-import f1bot
-
 from f1bot import command as cmd
 from f1bot.lib import parsers
 

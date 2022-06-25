@@ -6,7 +6,6 @@ import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 import pandas
 import attr
-import attrs
 
 from typing import Optional
 
@@ -69,7 +68,10 @@ def get_last_race_of_year(conn: sqlengine.Connection, year: int) -> RaceId:
             raceId, name
         FROM (
           SELECT
-            raceId, name, year, ROW_NUMBER() OVER (PARTITION BY year ORDER BY round DESC) as rnk
+            raceId,
+            name,
+            year,
+            ROW_NUMBER() OVER (PARTITION BY year ORDER BY round DESC) as rnk
           FROM races) r
         WHERE r.rnk = 1 AND r.year = {year}"""))
     if result.rowcount != 1:
@@ -129,7 +131,9 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
              "quali_time", "quali_date"])
 
 @engine.with_ergast
-def get_constructor_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
+def get_constructor_standings(
+    conn: sqlengine.Connection, year: int,
+) -> pandas.DataFrame:
     last_race_id = get_last_race_of_year(year)
     result = conn.execute(sql.text(
         f"""
@@ -166,7 +170,9 @@ def resolve_fuzzy_race_query(
 
 
 @engine.with_ergast
-def get_driver_standings(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
+def get_driver_standings(
+    conn: sqlengine.Connection, year: int,
+) -> pandas.DataFrame:
     last_race_id = get_last_race_of_year(year)
     result = conn.execute(sql.text(
         f"""
