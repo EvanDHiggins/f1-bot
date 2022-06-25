@@ -1,5 +1,4 @@
-from . import command_protocol as cmdp
-import f1bot.command as cmd
+from .command_protocol import CommandProtocol
 
 import f1bot.argparser as argparser
 
@@ -12,13 +11,13 @@ from typing import Type, Any
 class RegistryEntry:
     name: str
     parser: argparse.ArgumentParser
-    command_constructor: Type[cmdp.CommandProtocol]
+    command_constructor: Type[CommandProtocol]
 
 class CommandRegistry:
     def __init__(self):
         self._commands: dict[str, RegistryEntry] = {}
 
-    def register(self, command: Type[cmdp.CommandProtocol]):
+    def register(self, command: Type[CommandProtocol]):
         manifest = command.manifest()
         parser = command.init_parser(
             argparser.add_command_parser(
@@ -50,7 +49,7 @@ class CommandRegistrar(type):
                     'Only "Command" can use CommandRegistrar as its metaclass.')
             return
 
-        if not issubclass(cls, cmdp.CommandProtocol):
+        if not issubclass(cls, CommandProtocol):
             raise ValueError(
                 "All classes with metaclass CommandRegistrar must implement "
                 f"'Runnable'. Class '{name}' does not.")

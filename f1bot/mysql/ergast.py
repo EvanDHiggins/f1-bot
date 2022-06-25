@@ -6,6 +6,7 @@ import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 import pandas
 import attr
+import attrs
 
 from typing import Optional
 
@@ -16,6 +17,45 @@ def transform_to_dataframe(
 ) -> pandas.DataFrame:
     return pandas.DataFrame(
         columns=columns, data=result.columns(*columns))
+
+@engine.with_ergast
+def get_qualifying_session(
+    conn: sqlengine.Connection, race_id: RaceId
+) -> cmd.CommandValue:
+    result = conn.execute(sql.text(
+        f"""
+        SELECT *
+        FROM qualifying q
+        INNER JOIN drivers d
+        ON q.driverId = d.driverId
+        where raceId = :race_id
+        """
+    ), race_id=race_id)
+    return transform_to_dataframe(
+        result,
+        ['number', 'forename', 'surname', 'position', 'q1', 'q2', 'q3'])
+
+
+@engine.with_ergast
+def get_race_session(
+    conn: sqlengine.Connection, race_id: RaceId,
+) -> cmd.CommandValue:
+    result = conn.execute(sql.text(
+        f"""
+        SELECT *
+        FROM results r
+        INNER JOIN drivers d
+        ON r.driverId = d.driverId
+        INNER JOIN status s
+        ON s.statusId = r.statusId
+        WHERE r.raceId = :race_id
+        """
+    ), race_id=race_id)
+    print(result.keys())
+    return transform_to_dataframe(
+        result,
+        ['number', 'forename', 'surname', 'position', 'time', 'status'])
+
 
 @engine.with_ergast
 def get_last_race_of_year(conn: sqlengine.Connection, year: int) -> RaceId:

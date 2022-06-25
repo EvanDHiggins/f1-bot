@@ -1,5 +1,5 @@
-import f1bot
-import f1bot.command as cmd
+from .command_protocol import CommandValue
+from .command_registry import REGISTRY
 import attrs
 import enum
 import traceback
@@ -22,14 +22,14 @@ class CommandStatus(enum.Enum):
 @attrs.define(frozen=True)
 class CommandResult:
     status: CommandStatus
-    value: cmd.CommandValue
+    value: CommandValue
 
     @staticmethod
-    def error(value: cmd.CommandValue) -> 'CommandResult':
+    def error(value: CommandValue) -> 'CommandResult':
         return CommandResult(status=CommandStatus.INTERNAL_ERROR, value=value)
 
     @staticmethod
-    def ok(value: cmd.CommandValue) -> 'CommandResult':
+    def ok(value: CommandValue) -> 'CommandResult':
         return CommandResult(status=CommandStatus.OK, value=value)
 
     def is_ok(self) -> bool:
@@ -47,7 +47,7 @@ def run_command(args: list[str]) -> CommandResult:
         $COMMAND args...: Runs COMMAND with args.
     """
     parsed_args = argparser.get().parse_args(args)
-    command = cmd.REGISTRY.get(parsed_args.command).command_constructor
+    command = REGISTRY.get(parsed_args.command).command_constructor
     try:
         return CommandResult.ok(command().run(parsed_args))
     except CommandError as e:

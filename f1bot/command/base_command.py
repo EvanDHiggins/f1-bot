@@ -1,4 +1,4 @@
-from f1bot.command import CommandRegistrar
+from .command_registry import CommandRegistrar
 
 class Command(metaclass=CommandRegistrar):
     pass

@@ -30,9 +30,17 @@ class SessionResults(cmd.Command):
         session_type: SessionType = args.session_type
         race_id = ergast.resolve_fuzzy_race_query(year, weekend)
         if race_id is None:
-            raise cmd.CommandError(f'Could not find race \'{weekend}\' in {year}.')
-        return ""
-        return self.get_results(year, weekend, session_type)
+            raise cmd.CommandError(
+                f'Could not find race \'{weekend}\' in {year}.')
+        if session_type == SessionType.RACE:
+            return ergast.get_race_session(race_id)
+        elif session_type == SessionType.QUALIFYING:
+            return ergast.get_qualifying_session(race_id)
+        elif session_type is None:
+            raise cmd.CommandError("Unknown session type.")
+        raise cmd.CommandError(
+            "We don't support that command type yet.")
+        # return self.get_results(year, weekend, session_type)
 
     def get_results(
         self, year: int, weekend: str, session_type: SessionType
