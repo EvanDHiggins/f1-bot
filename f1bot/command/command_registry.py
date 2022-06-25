@@ -1,4 +1,4 @@
-from .command_protocol import CommandProtocol
+from .command_protocol import CommandProtocol, Manifest
 
 import f1bot.argparser as argparser
 
@@ -9,7 +9,7 @@ from typing import Type, Any
 
 @attrs.define()
 class RegistryEntry:
-    name: str
+    manifest: Manifest
     parser: argparse.ArgumentParser
     command_constructor: Type[CommandProtocol]
 
@@ -22,12 +22,13 @@ class CommandRegistry:
         if manifest.disabled:
             return
 
-        parser = command.init_parser(
-            argparser.add_command_parser(
-                manifest.name, description=manifest.description))
+        parser = argparser.add_command_parser(
+            manifest.name, description=manifest.description)
+
+        command.init_parser(parser)
 
         self._commands[manifest.name] = RegistryEntry(
-                name=manifest.name,
+                manifest=manifest,
                 parser=parser,
                 command_constructor=command)
 
@@ -36,6 +37,9 @@ class CommandRegistry:
 
     def get(self, name: str) -> RegistryEntry:
         return self._commands[name]
+
+    def all(self) -> list[RegistryEntry]:
+        return list(self._commands.values())
 
 
 REGISTRY = CommandRegistry()

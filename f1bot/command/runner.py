@@ -3,6 +3,7 @@ from .command_registry import REGISTRY
 import attrs
 import enum
 import traceback
+import io
 
 import f1bot.argparser as argparser
 
@@ -52,8 +53,18 @@ def _run_command(args: list[str]) -> CommandResult:
         help $COMMAND: Prints the help text for $COMMAND.
         $COMMAND args...: Runs COMMAND with args.
     """
+    if 'help'.startswith(args[0]):
+        return CommandResult.ok(show_help(args[1:]))
 
-    parsed_args = argparser.get().parse_args(args)
+    try:
+        parsed_args = argparser.get().parse_args(args)
+    except argparser.ArgumentError as e:
+        if args[0] not in REGISTRY:
+            return CommandResult.error(str(e))
+        return CommandResult.ok(
+            argparser.get_usage(REGISTRY.get(args[0]).parser))
+
+
     command = REGISTRY.get(parsed_args.command).command_constructor
     try:
         return CommandResult.ok(command().run(parsed_args))
@@ -63,6 +74,21 @@ def _run_command(args: list[str]) -> CommandResult:
             f"\n{str(e)}")
 
     except Exception as e:
+
         return CommandResult.error(
             f"Internal error running command: {command.manifest().name}.\n\n"
             f"{str(e)}\n{traceback.format_exc()}")
+
+def show_help(args: list[str]) -> str:
+    if len(args) == 0:
+        lines = ["Commands:"]
+        for entry in REGISTRY.all():
+            lines.append(
+                f"  {entry.manifest.name} -- {entry.manifest.description}")
+        return "\n".join(lines)
+
+    command_name = args[0]
+    if command_name not in REGISTRY:
+        return f"{command_name} is not a known command."
+    command = REGISTRY.get(command_name)
+    return argparser.get_usage(command.parser)
