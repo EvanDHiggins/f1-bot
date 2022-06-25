@@ -32,7 +32,8 @@ async def f1(ctx, *args: str):
 
 def format_command_value(value: cmd.CommandValue) -> str:
     if isinstance(value, pandas.DataFrame):
-        tabulated = tabulate.tabulate(value, headers='keys')
+        print(value.keys())
+        tabulated = tabulate.tabulate(value, headers='keys', showindex=False)
         return f"```{tabulated}```"
     elif isinstance(value, str):
         return f"```{value}```"
