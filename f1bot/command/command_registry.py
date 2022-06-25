@@ -19,6 +19,9 @@ class CommandRegistry:
 
     def register(self, command: Type[CommandProtocol]):
         manifest = command.manifest()
+        if manifest.disabled:
+            return
+
         parser = command.init_parser(
             argparser.add_command_parser(
                 manifest.name, description=manifest.description))

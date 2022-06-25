@@ -50,7 +50,6 @@ def get_race_session(
         WHERE r.raceId = :race_id
         """
     ), race_id=race_id)
-    print(result.keys())
     return transform_to_dataframe(
         result,
         ['number', 'forename', 'surname', 'position', 'time', 'status'])

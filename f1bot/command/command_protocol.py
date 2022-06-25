@@ -11,6 +11,7 @@ CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]
 class Manifest:
     name: str
     description: str
+    disabled: bool = False
 
 @runtime_checkable
 class CommandProtocol(Protocol):
