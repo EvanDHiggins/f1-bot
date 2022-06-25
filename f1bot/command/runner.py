@@ -39,6 +39,12 @@ class CommandResult:
         return self.status == CommandStatus.INTERNAL_ERROR
 
 def run_command(args: list[str]) -> CommandResult:
+    try:
+        return _run_command(args)
+    except Exception as e:
+        return CommandResult.error(str(e))
+
+def _run_command(args: list[str]) -> CommandResult:
     """Looks up a command and runs it.
 
     Supports three forms:
@@ -46,11 +52,8 @@ def run_command(args: list[str]) -> CommandResult:
         help $COMMAND: Prints the help text for $COMMAND.
         $COMMAND args...: Runs COMMAND with args.
     """
-    try:
-        parsed_args = argparser.get().parse_args(args)
-    except CommandError as e:
-        return CommandResult.error(str(e))
 
+    parsed_args = argparser.get().parse_args(args)
     command = REGISTRY.get(parsed_args.command).command_constructor
     try:
         return CommandResult.ok(command().run(parsed_args))
