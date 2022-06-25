@@ -20,9 +20,15 @@ class Schedule(cmd.Command):
 
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         year: int = args.year
-        schedule = ergast.get_schedule(year)
+        schedule = ergast.get_schedule(year).drop(columns=[
+            "quali_date", "quali_time",
+            "fp1_date", "fp1_time",
+            "fp2_date", "fp2_time",
+            "fp3_date", "fp3_time", "race_time"])
+
         if schedule is not None:
-            return schedule
+            return schedule 
+
         raise cmd.CommandError(
             'Something went wrong. Didn\'t get a DataFrame '
             'after dropping "Time" column.')
