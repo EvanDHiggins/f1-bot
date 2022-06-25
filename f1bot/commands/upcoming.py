@@ -1,7 +1,6 @@
 from f1bot import command as cmd
 from f1bot.mysql import ergast
 
-import f1bot
 import pandas
 import pytz
 
@@ -9,9 +8,6 @@ import argparse
 import datetime as dt
 
 from typing import Tuple
-
-PARSER = f1bot.add_command_parser(
-        'upcoming', description="Show the results for a session.")
 
 def format_event(event: pandas.Series) -> cmd.CommandValue:
     header_columns = ["Name", "Round", "Circuit", "Location"]
@@ -59,10 +55,17 @@ def build_datetime(date: dt.date, time: dt.timedelta) -> dt.datetime:
 class Upcoming(cmd.Command):
 
     @classmethod
-    def name(cls) -> str:
-        return 'upcoming'
+    def manifest(cls) -> cmd.Manifest:
+        return cmd.Manifest(
+            name="upcoming",
+            description="Show the results for a session.",
+        )
 
-    def run(self, args: argparse.Namespace) -> cmd.CommandValue:
+    @classmethod
+    def init_parser(cls, _parser: argparse.ArgumentParser):
+        pass
+
+    def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
         # The schedule is ordered by date
         schedule = ergast.get_schedule(dt.date.today().year)
 

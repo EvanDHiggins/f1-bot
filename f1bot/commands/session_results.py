@@ -5,22 +5,24 @@ from f1bot.lib import parsers
 from f1bot.lib.fmt import format_lap_time
 from f1bot.lib.sessions import SessionType, SessionLoader
 from f1bot.mysql import ergast
-import f1bot
 import pandas
 import argparse
-
-PARSER = f1bot.add_command_parser(
-        'results', description="Show the results for a session.")
-PARSER.add_argument('year', type=parsers.parse_year)
-PARSER.add_argument('weekend', type=str)
-PARSER.add_argument('session_type', type=SessionType.parse)
 
 class SessionResults(cmd.Command):
     """Returns the session results for a particular session."""
 
     @classmethod
-    def name(cls) -> str:
-        return 'results'
+    def manifest(cls) -> cmd.Manifest:
+        return cmd.Manifest(
+            name='results',
+            description="Show the results for a session.",
+        )
+
+    @classmethod
+    def init_parser(cls, parser: argparse.ArgumentParser):
+        parser.add_argument('year', type=parsers.parse_year)
+        parser.add_argument('weekend', type=str)
+        parser.add_argument('session_type', type=SessionType.parse)
 
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         year: int = args.year

@@ -1,5 +1,3 @@
-import f1bot
-
 from fastf1.core import SessionResults, Session
 from collections import defaultdict
 from attrs import define
@@ -58,17 +56,19 @@ class AggregateDriverData:
     avg_teammate_delta: float
     num_sessions: int
 
-PARSER = f1bot.add_command_parser(
-    'teammate_delta',
-    description=(
-        "Prints the average deltas for teammates in qualifying or races."))
-PARSER.add_argument('session_type', choices=['race', 'qualifying'])
-
 
 class TeammateDelta(cmd.Command):
     @classmethod
-    def name(cls) -> str:
-        return 'teammate_delta'
+    def manifest(cls) -> cmd.Manifest:
+        return cmd.Manifest(
+            name="teammate_delta",
+            description=(
+                "Average delta between teammates for a given session type."),
+        )
+
+    @classmethod
+    def init_parser(cls, parser: argparse.ArgumentParser):
+        parser.add_argument('session_type', choices=['race', 'qualifying'])
 
     def run(self, args: argparse.Namespace) -> str:
 

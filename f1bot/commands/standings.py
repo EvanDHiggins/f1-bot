@@ -8,17 +8,6 @@ from f1bot.mysql import ergast
 import argparse
 import enum
 import pandas
-import datetime as dt
-
-NAME = 'standings'
-
-PARSER = f1bot.add_command_parser(
-        NAME,
-        description="Returns the driver standings for the year.",)
-PARSER.add_argument(
-        'standings_type', choices=['drivers', 'wdc', 'constructors', 'wcc'],
-        default='drivers', help="Determines which type of standings to fetch")
-PARSER.add_argument('year', type=parsers.parse_year)
 
 class StandingsType(enum.Enum):
     CONSTRUCTORS = 0
@@ -41,8 +30,20 @@ def standings_from_ergast(standings_type: StandingsType, year: int) -> pandas.Da
 class Standings(cmd.Command):
 
     @classmethod
-    def name(cls) -> str:
-        return NAME
+    def manifest(cls) -> cmd.Manifest:
+        return cmd.Manifest(
+            name='standings',
+            description="Returns the driver standings for the year.",
+        )
+
+    @classmethod
+    def init_parser(cls, parser: argparse.ArgumentParser):
+        parser.add_argument(
+            'standings_type',
+            choices=['drivers', 'wdc', 'constructors', 'wcc'],
+            default='drivers',
+            help="Determines which type of standings to fetch")
+        parser.add_argument('year', type=parsers.parse_year)
 
     def run(self, args: argparse.Namespace) -> cmd.CommandValue:
         standings_type = parse_standing_type(args.standings_type)

@@ -13,6 +13,35 @@ CommandValue = Union[CommandPrimitive, list[CommandPrimitive]]
 
 _commands: dict[str, Type['Runnable']] = {}
 
+@attrs.define()
+class RegistryEntry:
+    name: str
+    parser: argparse.ArgumentParser
+    command_constructor: Type['Runnable']
+
+class CommandRegistry:
+    def __init__(self):
+        self._commands: dict[str, RegistryEntry] = {}
+
+    def register(self, command: Type['Runnable']):
+        manifest = command.manifest()
+        parser = command.init_parser(
+            f1bot.add_command_parser(
+                manifest.name, description=manifest.description))
+
+        self._commands[manifest.name] = RegistryEntry(
+                name=manifest.name,
+                parser=parser,
+                command_constructor=command)
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._commands
+
+    def get(self, name: str) -> RegistryEntry:
+        return self._commands[name]
+
+REGISTRY = CommandRegistry()
+
 def get_command_dict() -> dict[str, Type['Runnable']]:
     return _commands
 
@@ -40,14 +69,33 @@ class CommandResult:
         return self.status == CommandStatus.INTERNAL_ERROR
 
 
+@attrs.define()
+class Manifest:
+    name: str
+    description: str
+
 @runtime_checkable
 class Runnable(Protocol):
 
     @classmethod
-    def name(cls) -> str:
+    def manifest(cls) -> Manifest:
+        raise NotImplementedError
+
+    @classmethod
+    def init_parser(cls, parser: argparse.ArgumentParser):
+        """Initializes the parser associated with this Runnable.
+
+        init_parser will be called exactly once during registration to
+        initialize the ArgumentParser for this command.
+
+        Args:
+            parser: A subparser for the main ArgumentParser constructed with
+                this Runnable's name().
+        """
         raise NotImplementedError
 
     def run(self, args: argparse.Namespace) -> CommandValue:
+        """Implementation of the actual command."""
         raise NotImplementedError
 
 
@@ -76,11 +124,10 @@ class CommandRegistrar(type):
                 "All classes with metaclass CommandRegistrar must implement "
                 f"'Runnable'. Class '{name}' does not.")
 
-        _commands[cls.name()] = cls
+        REGISTRY.register(cls)
 
 class Command(metaclass=CommandRegistrar):
     pass
-
 
 def run_command(args: list[str]) -> CommandResult:
     """Looks up a command and runs it.
@@ -91,13 +138,15 @@ def run_command(args: list[str]) -> CommandResult:
         $COMMAND args...: Runs COMMAND with args.
     """
     parsed_args = f1bot.get().parse_args(args)
-    command = get_command_dict()[parsed_args.command]
+    command = REGISTRY.get(parsed_args.command).command_constructor
     try:
         return CommandResult.ok(command().run(parsed_args))
     except CommandError as e:
         return CommandResult.error(
-            f"Failed to run command '{command.name()}' with error:\n{str(e)}")
+            f"Failed to run command '{command.manifest().name}' with error:"
+            f"\n{str(e)}")
 
     except Exception as e:
         return CommandResult.error(
-            f"Internal error running command: {command.name}.\n\n{str(e)}\n{traceback.format_exc()}")
+            f"Internal error running command: {command.manifest().name}.\n\n"
+            f"{str(e)}\n{traceback.format_exc()}")
