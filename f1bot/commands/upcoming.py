@@ -8,6 +8,7 @@ import argparse
 import datetime as dt
 
 from typing import Tuple
+import attrs
 
 def format_event(event: pandas.Series) -> cmd.CommandValue:
     header = f"Round {event['round']}: {event['race_name']} -- {event['circuit_name']}"
@@ -17,7 +18,10 @@ def format_event(event: pandas.Series) -> cmd.CommandValue:
         "Event", "Date", "Time (PT)", "Time (MT)", "Time (CT)", "Time (ET)"]
 
     def fmt_date(date: str, time: str) -> list[str]:
-        return list(get_event_times(event[date], event[time]))
+        d = event[date]
+        t = event[time]
+        dti = get_event_times(d, t)
+        return [dti.date, dti.pt, dti.mt, dti.ct, dti.et]
 
     rows = [
         ["Race"] + fmt_date("race_date", "race_time"),
@@ -31,9 +35,24 @@ def format_event(event: pandas.Series) -> cmd.CommandValue:
 
     return [header, body]
 
+@attrs.define()
+class DateTimeInfo:
+    date: str
+    pt: str
+    mt: str
+    ct: str
+    et: str
+
+    @classmethod
+    def none(cls) -> 'DateTimeInfo':
+        return DateTimeInfo(date="N/A", pt="N/A", mt="N/A", ct="N/A", et="N/A")
+
 def get_event_times(
     date: dt.date, delta: dt.timedelta,
-) -> Tuple[str, str, str, str, str]:
+) -> DateTimeInfo:
+
+    if date is None or delta is None:
+        return DateTimeInfo.none()
 
     utc = build_datetime(date, delta).replace(tzinfo=dt.timezone.utc)
     pt = utc.astimezone(tz=pytz.timezone("US/Pacific"))
@@ -43,12 +62,12 @@ def get_event_times(
 
     time_format = "%-I:%M %p" # like "1:42 AM"
 
-    return (
-        pt.strftime("%b %-d"),
-        pt.strftime(time_format),
-        mt.strftime(time_format),
-        ct.strftime(time_format),
-        et.strftime(time_format))
+    return DateTimeInfo(
+        date=pt.strftime("%b %-d"),
+        pt=pt.strftime(time_format),
+        mt=mt.strftime(time_format),
+        ct=ct.strftime(time_format),
+        et=et.strftime(time_format))
 
 def build_datetime(date: dt.date, time: dt.timedelta) -> dt.datetime:
     return dt.datetime(year=date.year, month=date.month, day=date.day) + time
