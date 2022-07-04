@@ -3,12 +3,11 @@ from f1bot.mysql import ergast
 
 import pandas
 import pytz
+import attrs
 
 import argparse
 import datetime as dt
 
-from typing import Tuple
-import attrs
 
 def format_event(event: pandas.Series) -> cmd.CommandValue:
     header = f"Round {event['round']}: {event['race_name']} -- {event['circuit_name']}"
@@ -49,6 +48,7 @@ class DateTimeInfo:
 def get_event_times(
     date: dt.date, delta: dt.timedelta,
 ) -> DateTimeInfo:
+    """Returns formatted timezone dates and times for the specified datetime."""
 
     if date is None or delta is None:
         return DateTimeInfo.none()
