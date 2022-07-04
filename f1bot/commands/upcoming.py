@@ -17,18 +17,17 @@ def format_event(event: pandas.Series) -> cmd.CommandValue:
     body_columns = [
         "Event", "Date", "Time (PT)", "Time (MT)", "Time (CT)", "Time (ET)"]
 
-    def fmt_date(date: str, time: str) -> list[str]:
-        d = event[date]
-        t = event[time]
-        dti = get_event_times(d, t)
+    def fmt_date_row(date: str, time: str) -> list[str]:
+        dti = get_event_times(event[date], event[time])
         return [dti.date, dti.pt, dti.mt, dti.ct, dti.et]
 
     rows = [
-        ["Race"] + fmt_date("race_date", "race_time"),
-        ["Qualifying"] + fmt_date("quali_date", "quali_time"),
-        ["FP3"] + fmt_date("fp3_date", "fp3_time"),
-        ["FP2"] + fmt_date("fp2_date", "fp2_time"),
-        ["FP1"] + fmt_date("fp1_date", "fp1_time"),
+        ["Race"] + fmt_date_row("race_date", "race_time"),
+        ["Qualifying"] + fmt_date_row("quali_date", "quali_time"),
+        ["Sprint"] + fmt_date_row("sprint_date", "sprint_time"),
+        ["FP3"] + fmt_date_row("fp3_date", "fp3_time"),
+        ["FP2"] + fmt_date_row("fp2_date", "fp2_time"),
+        ["FP1"] + fmt_date_row("fp1_date", "fp1_time"),
     ]
 
     body = pandas.DataFrame(data=rows, columns=body_columns)

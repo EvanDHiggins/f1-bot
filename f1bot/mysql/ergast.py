@@ -113,7 +113,8 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
             fp1_date, fp1_time,
             fp2_date, fp2_time,
             fp3_date, fp3_time,
-            quali_date, quali_time
+            quali_date, quali_time,
+            sprint_date, sprint_time
         FROM races r
             INNER JOIN circuits c
             ON r.circuitId = c.circuitId
@@ -127,7 +128,8 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
              "quali_date", "quali_time",
              "fp1_date", "fp1_time",
              "fp2_date", "fp2_time",
-             "fp3_date", "fp3_time"])
+             "fp3_date", "fp3_time",
+             "sprint_date", "sprint_time"])
 
 @engine.with_ergast
 def get_constructor_standings(

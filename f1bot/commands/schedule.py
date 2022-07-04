@@ -29,7 +29,9 @@ class Schedule(cmd.Command):
             "quali_date", "quali_time",
             "fp1_date", "fp1_time",
             "fp2_date", "fp2_time",
-            "fp3_date", "fp3_time", "race_time"]
+            "fp3_date", "fp3_time",
+            "sprint_date", "sprint_time",
+            "race_time"]
         )
         if schedule is None:
             raise none_df_error
