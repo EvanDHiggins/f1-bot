@@ -4,11 +4,15 @@ from f1bot.mysql import engine
 
 from f1bot.data.standings import Standings
 from f1bot.data.standings import Row as StandingsRow
+from f1bot.data.schedule import Schedule
+from f1bot.data.schedule import Row as ScheduleRow
 
 import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 import pandas
 import attr
+
+import datetime as dt
 
 from typing import Optional
 
@@ -109,10 +113,10 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
         SELECT
             r.name as "race_name",
             r.round as "round",
-            r.date as "race_date",
-            r.time as "race_time",
             c.name as "circuit_name",
             c.location as "location",
+            r.date as "race_date",
+            r.time as "race_time",
             fp1_date, fp1_time,
             fp2_date, fp2_time,
             fp3_date, fp3_time,
@@ -133,6 +137,56 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
              "fp2_date", "fp2_time",
              "fp3_date", "fp3_time",
              "sprint_date", "sprint_time"])
+
+@engine.with_ergast
+def get_schedule_as_structured(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
+    result = conn.execute(sql.text(
+        f"""
+        SELECT
+            r.name as "race_name",
+            r.round as "round",
+            c.name as "circuit_name",
+            c.location as "location",
+            r.date as "race_date",
+            r.time as "race_time",
+            fp1_date, fp1_time,
+            fp2_date, fp2_time,
+            fp3_date, fp3_time,
+            quali_date, quali_time,
+            sprint_date, sprint_time
+        FROM races r
+            INNER JOIN circuits c
+            ON r.circuitId = c.circuitId
+        WHERE year = {year}
+        ORDER BY round"""))
+
+    def to_dt(s: sqlengine.Row, prefix: str) -> Optional[dt.datetime]:
+        event_date = s[f"{prefix}_date"]
+        if event_date is None:
+            return None
+        event_time = s[f"{prefix}_time"]
+        return dt.datetime(
+            year=event_date.year, month=event_date.month, day=event_date.day
+        ) + event_time
+
+    return Schedule(
+        rows=[
+            ScheduleRow(
+                race_name=row['race_name'],
+                round_num=row['round'],
+                circuit=row['circuit_name'],
+                location=row['location'],
+                race=to_dt(row, 'race'),
+                sprint=to_dt(row, 'sprint'),
+                qualifying=to_dt(row, 'quali'),
+                fp1=to_dt(row, 'fp1'),
+                fp2=to_dt(row, 'fp2'),
+                fp3=to_dt(row, 'fp3'),
+            )
+            for row in result.all()
+        ]
+    )
+
 
 @engine.with_ergast
 def resolve_fuzzy_race_query(

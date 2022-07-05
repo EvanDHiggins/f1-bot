@@ -25,27 +25,16 @@ class Schedule(cmd.Command):
             'Something went wrong. Didn\'t get a DataFrame '
             'after dropping "Time" column.')
 
-        schedule = ergast.get_schedule(year).drop(columns=[
-            "quali_date", "quali_time",
-            "fp1_date", "fp1_time",
-            "fp2_date", "fp2_time",
-            "fp3_date", "fp3_time",
-            "sprint_date", "sprint_time",
-            "race_time"]
-        )
-        if schedule is None:
-            raise none_df_error
 
-        schedule.rename(columns={
-            "race_name": "Race",
-            "round": "Round",
-            "circuit_name": "Circuit",
-            "location": "Location",
-            "race_date": "Date",
-        }, inplace=True)
+        schedule = ergast.get_schedule_as_structured(year).to_dataframe()[[
+            "Name", "Round", "Circuit", "Location", "Race"
+        ]]
 
         if schedule is None:
             raise none_df_error
+
+        schedule["Race"] = schedule["Race"].apply(lambda x: x.date())
+        schedule.rename({"Race": "Date"}, inplace=True)
 
         return schedule
 
