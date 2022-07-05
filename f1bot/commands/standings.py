@@ -19,11 +19,13 @@ def parse_standing_type(arg: str) -> StandingsType:
         return StandingsType.CONSTRUCTORS
     raise cmd.CommandError(f"Invalid argument: {arg}")
 
-def standings_from_ergast(standings_type: StandingsType, year: int) -> pandas.DataFrame:
+def standings_from_ergast(
+    standings_type: StandingsType, year: int
+) -> pandas.DataFrame:
     if standings_type == StandingsType.DRIVERS:
         # TODO: This should merge the forename and surname column into one.
-        return ergast.get_driver_standings(year)
-    return ergast.get_constructor_standings(year)
+        return ergast.get_driver_standings(year).to_dataframe()
+    return ergast.get_constructor_standings(year).to_dataframe()
 
 class Standings(cmd.Command):
 

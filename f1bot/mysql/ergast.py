@@ -2,6 +2,9 @@ from f1bot import command as cmd
 
 from f1bot.mysql import engine
 
+from f1bot.data.standings import Standings
+from f1bot.data.standings import Row as StandingsRow
+
 import sqlalchemy as sql # type: ignore
 import sqlalchemy.engine as sqlengine
 import pandas
@@ -132,23 +135,6 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
              "sprint_date", "sprint_time"])
 
 @engine.with_ergast
-def get_constructor_standings(
-    conn: sqlengine.Connection, year: int,
-) -> pandas.DataFrame:
-    last_race_id = get_last_race_of_year(year)
-    result = conn.execute(sql.text(
-        f"""
-        SELECT *
-        FROM constructorStandings cs
-        INNER JOIN constructors c
-        ON cs.constructorId = c.constructorId
-        WHERE raceId = {last_race_id}
-        ORDER BY position
-        """
-    ))
-    return transform_to_dataframe(result, ["name", "position", "points"])
-
-@engine.with_ergast
 def resolve_fuzzy_race_query(
     conn: sqlengine.Connection, year: int, query: str
 ) -> Optional[RaceId]:
@@ -189,10 +175,11 @@ def resolve_fuzzy_race_query(
     return None
 
 
+
 @engine.with_ergast
 def get_driver_standings(
     conn: sqlengine.Connection, year: int,
-) -> pandas.DataFrame:
+) -> Standings:
     last_race_id = get_last_race_of_year(year)
     result = conn.execute(sql.text(
         f"""
@@ -204,5 +191,40 @@ def get_driver_standings(
         ORDER BY position
         """
     ))
-    return transform_to_dataframe(
-            result, ["forename", "surname", "points", "position"])
+
+    return Standings(
+        rows=[
+            StandingsRow(
+                name=" ".join([row["forename"], row["surname"]]),
+                position=row["position"],
+                points=row["points"]
+            )
+            for row in result.all()
+        ]
+    )
+
+@engine.with_ergast
+def get_constructor_standings(
+    conn: sqlengine.Connection, year: int,
+) -> Standings:
+    last_race_id = get_last_race_of_year(year)
+    result = conn.execute(sql.text(
+        f"""
+        SELECT *
+        FROM constructorStandings cs
+        INNER JOIN constructors c
+        ON cs.constructorId = c.constructorId
+        WHERE raceId = {last_race_id}
+        ORDER BY position
+        """
+    ))
+    return Standings(
+        rows=[
+            StandingsRow(
+                name=row["name"],
+                position=row["position"],
+                points=row["points"]
+            )
+            for row in result.all()
+        ]
+    )
