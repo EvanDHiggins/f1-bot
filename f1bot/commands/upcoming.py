@@ -1,5 +1,6 @@
 from f1bot import command as cmd
 from f1bot.mysql import ergast
+from f1bot.data.schedule import Row as ScheduleRow
 
 import pandas
 import pytz
@@ -20,13 +21,11 @@ class Upcoming(cmd.Command):
 
     def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
         # The schedule is ordered by date
-        schedule = ergast.get_schedule(dt.date.today().year)
+        schedule = ergast.get_schedule_as_structured(dt.date.today().year)
 
         # The first race we find that hasn't happened yet must be the next one.
-        for _, event in schedule.iterrows():
-            race_date: dt.date = event["race_date"]
-            time: dt.timedelta = event["race_time"].to_pytimedelta()
-            start_time = build_datetime(race_date, time)
+        for event in schedule.rows:
+            start_time = event.race
             has_happened = start_time < dt.datetime.now()
             if not has_happened:
                 return format_event(event)
@@ -35,24 +34,23 @@ class Upcoming(cmd.Command):
             "Couldn't find an event that hasn't happened yet.")
 
 
-def format_event(event: pandas.Series) -> cmd.CommandValue:
-    header = f"Round {event['round']}: {event['race_name']} -- {event['circuit_name']}"
-
+def format_event(event: ScheduleRow) -> cmd.CommandValue:
+    header = f"Round {event.round_num}: {event.race_name} -- {event.circuit}"
 
     body_columns = [
         "Event", "Date", "Time (PT)", "Time (MT)", "Time (CT)", "Time (ET)"]
 
-    def fmt_date_row(date: str, time: str) -> list[str]:
-        dti = get_event_times(event[date], event[time])
+    def fmt_date_row(event_time: dt.datetime) -> list[str]:
+        dti = get_event_times(event_time)
         return [dti.date, dti.pt, dti.mt, dti.ct, dti.et]
 
     rows = [
-        ["Race"] + fmt_date_row("race_date", "race_time"),
-        ["Qualifying"] + fmt_date_row("quali_date", "quali_time"),
-        ["Sprint"] + fmt_date_row("sprint_date", "sprint_time"),
-        ["FP3"] + fmt_date_row("fp3_date", "fp3_time"),
-        ["FP2"] + fmt_date_row("fp2_date", "fp2_time"),
-        ["FP1"] + fmt_date_row("fp1_date", "fp1_time"),
+        ["Race"] + fmt_date_row(event.race),
+        ["Qualifying"] + fmt_date_row(event.qualifying),
+        ["Sprint"] + fmt_date_row(event.sprint),
+        ["FP3"] + fmt_date_row(event.fp3),
+        ["FP2"] + fmt_date_row(event.fp2),
+        ["FP1"] + fmt_date_row(event.fp1),
     ]
 
     body = pandas.DataFrame(data=rows, columns=body_columns)
@@ -71,15 +69,13 @@ class DateTimeInfo:
     def none(cls) -> 'DateTimeInfo':
         return DateTimeInfo(date="N/A", pt="N/A", mt="N/A", ct="N/A", et="N/A")
 
-def get_event_times(
-    date: dt.date, delta: dt.timedelta,
-) -> DateTimeInfo:
+def get_event_times(event_time: dt.datetime) -> DateTimeInfo:
     """Returns formatted timezone dates and times for the specified datetime."""
 
-    if date is None or delta is None:
+    if event_time is None or event_time is None:
         return DateTimeInfo.none()
 
-    utc = build_datetime(date, delta).replace(tzinfo=dt.timezone.utc)
+    utc = event_time.replace(tzinfo=dt.timezone.utc)
     pt = utc.astimezone(tz=pytz.timezone("US/Pacific"))
     mt = utc.astimezone(tz=pytz.timezone("US/Mountain"))
     ct = utc.astimezone(tz=pytz.timezone("US/Central"))
