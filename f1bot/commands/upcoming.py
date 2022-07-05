@@ -21,7 +21,7 @@ class Upcoming(cmd.Command):
 
     def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
         # The schedule is ordered by date
-        schedule = ergast.get_schedule_as_structured(dt.date.today().year)
+        schedule = ergast.get_schedule(dt.date.today().year)
 
         # The first race we find that hasn't happened yet must be the next one.
         for event in schedule.rows:

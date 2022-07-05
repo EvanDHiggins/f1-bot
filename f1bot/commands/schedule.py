@@ -26,7 +26,7 @@ class Schedule(cmd.Command):
             'after dropping "Time" column.')
 
 
-        schedule = ergast.get_schedule_as_structured(year).to_dataframe()[[
+        schedule = ergast.get_schedule(year).to_dataframe()[[
             "Name", "Round", "Circuit", "Location", "Race"
         ]]
 

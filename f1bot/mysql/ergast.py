@@ -128,38 +128,6 @@ def get_schedule(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
         WHERE year = {year}
         ORDER BY round"""))
 
-    return transform_to_dataframe(
-            result, 
-            ["race_name", "round", "circuit_name", "location",
-             "race_date", "race_time",
-             "quali_date", "quali_time",
-             "fp1_date", "fp1_time",
-             "fp2_date", "fp2_time",
-             "fp3_date", "fp3_time",
-             "sprint_date", "sprint_time"])
-
-@engine.with_ergast
-def get_schedule_as_structured(conn: sqlengine.Connection, year: int) -> pandas.DataFrame:
-    result = conn.execute(sql.text(
-        f"""
-        SELECT
-            r.name as "race_name",
-            r.round as "round",
-            c.name as "circuit_name",
-            c.location as "location",
-            r.date as "race_date",
-            r.time as "race_time",
-            fp1_date, fp1_time,
-            fp2_date, fp2_time,
-            fp3_date, fp3_time,
-            quali_date, quali_time,
-            sprint_date, sprint_time
-        FROM races r
-            INNER JOIN circuits c
-            ON r.circuitId = c.circuitId
-        WHERE year = {year}
-        ORDER BY round"""))
-
     def to_dt(s: sqlengine.Row, prefix: str) -> Optional[dt.datetime]:
         event_date = s[f"{prefix}_date"]
         if event_date is None:
