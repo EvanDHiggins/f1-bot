@@ -167,6 +167,25 @@ def resolve_fuzzy_race_query(
                 'Expected one result, found None?! For query '
                 f'(year={year}, q={query})')
         return int(race['raceId'])
+
+    match_by_track_name = conn.execute(sql.text(
+        """
+        SELECT *
+        FROM races r
+        INNER JOIN circuits c
+        ON r.circuitId = c.circuitId
+        WHERE
+            c.name LIKE CONCAT('%', :race_name, '%')
+            AND year = :year
+        """), race_name=query, year=year)
+    if match_by_track_name.rowcount == 1:
+        race = match_by_track_name.first()
+        if race is None:
+            raise ValueError(
+                'Expected one result, found None?! For query '
+                f'(year={year}, q={query})')
+        return int(race['raceId'])
+
     return None
 
 
