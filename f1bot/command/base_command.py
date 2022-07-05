@@ -1,5 +1,10 @@
 from .command_registry import CommandRegistrar
 
+import argparse
+
 class Command(metaclass=CommandRegistrar):
-    pass
+
+    @classmethod
+    def init_parser(cls, _parser: argparse.ArgumentParser):
+        pass
 

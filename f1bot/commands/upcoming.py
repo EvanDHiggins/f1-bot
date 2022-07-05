@@ -80,10 +80,6 @@ class Upcoming(cmd.Command):
             description="Show the results for a session.",
         )
 
-    @classmethod
-    def init_parser(cls, _parser: argparse.ArgumentParser):
-        pass
-
     def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
         # The schedule is ordered by date
         schedule = ergast.get_schedule(dt.date.today().year)
