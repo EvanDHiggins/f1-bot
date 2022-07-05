@@ -9,6 +9,32 @@ import argparse
 import datetime as dt
 
 
+class Upcoming(cmd.Command):
+
+    @classmethod
+    def manifest(cls) -> cmd.Manifest:
+        return cmd.Manifest(
+            name="upcoming",
+            description="Show the results for a session.",
+        )
+
+    def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
+        # The schedule is ordered by date
+        schedule = ergast.get_schedule(dt.date.today().year)
+
+        # The first race we find that hasn't happened yet must be the next one.
+        for _, event in schedule.iterrows():
+            race_date: dt.date = event["race_date"]
+            time: dt.timedelta = event["race_time"].to_pytimedelta()
+            start_time = build_datetime(race_date, time)
+            has_happened = start_time < dt.datetime.now()
+            if not has_happened:
+                return format_event(event)
+
+        raise cmd.CommandError(
+            "Couldn't find an event that hasn't happened yet.")
+
+
 def format_event(event: pandas.Series) -> cmd.CommandValue:
     header = f"Round {event['round']}: {event['race_name']} -- {event['circuit_name']}"
 
@@ -70,28 +96,3 @@ def get_event_times(
 
 def build_datetime(date: dt.date, time: dt.timedelta) -> dt.datetime:
     return dt.datetime(year=date.year, month=date.month, day=date.day) + time
-
-class Upcoming(cmd.Command):
-
-    @classmethod
-    def manifest(cls) -> cmd.Manifest:
-        return cmd.Manifest(
-            name="upcoming",
-            description="Show the results for a session.",
-        )
-
-    def run(self, _args: argparse.Namespace) -> cmd.CommandValue:
-        # The schedule is ordered by date
-        schedule = ergast.get_schedule(dt.date.today().year)
-
-        # The first race we find that hasn't happened yet must be the next one.
-        for _, event in schedule.iterrows():
-            race_date: dt.date = event["race_date"]
-            time: dt.timedelta = event["race_time"].to_pytimedelta()
-            start_time = build_datetime(race_date, time)
-            has_happened = start_time < dt.datetime.now()
-            if not has_happened:
-                return format_event(event)
-
-        raise cmd.CommandError(
-            "Couldn't find an event that hasn't happened yet.")
